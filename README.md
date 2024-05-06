@@ -1,4 +1,4 @@
-# **GARG-AML:** *finding smurfing using Graph-Aided Risk Guarding for Anti-Money* </br><sub><sub>*Bruno Deprez* </sub></sub>
+# **GARG-AML:** *finding smurfing using Graph-Aided Risk Guarding for Anti-Money Laundering* </br><sub><sub>*Bruno Deprez* </sub></sub>
 
 
 ## Repository structure
