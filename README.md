@@ -1,19 +1,7 @@
-# *Title* </br><sub><sub>*Authors* [[*Outlet Year*]](*url to paper*)</sub></sub>
-*Write a short summary of your paper*
+# *GARG-AML* </br><sub><sub>*Bruno Deprez* </sub></sub>
+
 
 ## Repository structure
-This repository is organised as follows:
-```bash
-|- assets/
-    |- *your own files*
-|- config/
-|- data/
-|- lib/
-|- notebooks/
-|- res/
-|- scripts/
-|- src/
-```
 
 ## Installing
 We have provided a `requirements.txt` file:
