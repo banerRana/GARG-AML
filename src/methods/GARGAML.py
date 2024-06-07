@@ -72,7 +72,7 @@ def GARG_AML(G_reduced): # The method works with a pre-processed graph. G_reduce
     
     nodes = list(G_reduced.nodes)
     for node in nodes:
-        GARG_AML_node_value = GARG_AML_node(node, G_degree_dict, G_reduced)
+        GARG_AML_node_value = GARG_AML_node(node, G_reduced)
         GARG_AML_values[node] = GARG_AML_node_value
         
     summaries_neighbours = dict()
