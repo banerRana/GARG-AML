@@ -5,13 +5,11 @@ def create_identifiers(df):
     """
     Create a list of identifiers for each row in the dataframe.
     """
-    identifyer_list = []
+    # Convert all columns to string type
+    df_str = df.astype(str)
 
-    for i,row in df.iterrows():
-        item = ""
-        for col in df.columns:
-            item += str(row[col]) + ","
-        identifyer_list.append(item[:-1])
+    # Then use agg to join all column values into a single string for each row
+    identifyer_list = df_str.agg(','.join, axis=1).tolist()
 
     return identifyer_list
 
