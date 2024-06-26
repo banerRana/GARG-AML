@@ -1,7 +1,3 @@
-import pandas as pd
-import networkx as nx
-import numpy as np
-
 def measure_1_function(piece_1_dim, adj_full):
     piece_1 = adj_full[:piece_1_dim[0], :piece_1_dim[1]]
     total_sum_1 = piece_1.sum()
@@ -41,3 +37,4 @@ def measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full):
         rel_3 = 0
     
     return rel_3
+
