@@ -6,7 +6,7 @@ from .utils.measure_functions_undirected import measure_1_function, measure_2_fu
 from .utils.measure_functions_directed import *
 from .utils.neighbourhood_functions import summaries_neighbourhoors_node, degree_neighbours_node, GARG_AML_nodeselection
 
-def GARG_AML_node_directed(node, G_copy):
+def GARG_AML_node_directed(node, G_copy, use_inverse = False):
     G_ego_second = nx.ego_graph(G_copy, node, 2, undirected=True) #Use both incoming and outgoing edges
 
     nodes_0, nodes_1, nodes_2, nodes_ordered = GARG_AML_nodeselection(G_ego_second, node)
@@ -32,6 +32,9 @@ def GARG_AML_node_directed(node, G_copy):
 
     measure = measure_high - measure_low
 
+    if use_inverse:
+        measure = max(measure, -measure)
+    
     return(measure)
 
 def GARG_AML_node_undirected(node, G_copy):
