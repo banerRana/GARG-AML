@@ -57,19 +57,23 @@ def GARG_AML_nodeselection_undirected(G_ego_second, node):
         
     return nodes_1, nodes_2, nodes_ordered
 
-def GARG_AML_nodeselection_directed(G_ego_second, node):
+def GARG_AML_nodeselection_directed(G_ego_second, G_ego_second_und, G_ego_second_rev, node):
     nodes_1 = list(
-      nx.ego_graph(G_ego_second, node, undirected=True).nodes
+      nx.ego_graph(G_ego_second_und, node).nodes
       )
     nodes_1.remove(node)
     nodes_2 = list(G_ego_second.nodes)
 
     nodes_2_s = list(
-        nx.ego_graph(G_ego_second, node, undirected=False, radius=2).nodes
+        nx.ego_graph(G_ego_second, node, radius=2).nodes
         )
     
+    nodes_2_rs = list(
+        nx.ego_graph(G_ego_second_rev, node, radius=2).nodes
+    )
+    
     nodes_0 = list(
-        set(nodes_2).difference(set(nodes_2_s)).difference(set(nodes_1))
+        set(nodes_2).difference(set(nodes_2_s)).difference(set(nodes_2_rs)).difference(set(nodes_1))
     )
 
     nodes_0 = [node] + nodes_0
@@ -84,8 +88,8 @@ def GARG_AML_nodeselection_directed(G_ego_second, node):
         
     return nodes_0, nodes_1, nodes_2, nodes_ordered
 
-def GARG_AML_nodeselection(G_ego_second, node):
-    if G_ego_second.is_directed():
-        return GARG_AML_nodeselection_directed(G_ego_second, node)
+def GARG_AML_nodeselection(G_ego_second, node, directed, G_ego_second_und=None, G_ego_second_rev=None):
+    if directed:
+        return GARG_AML_nodeselection_directed(G_ego_second, G_ego_second_und, G_ego_second_rev, node)
     else:
         return GARG_AML_nodeselection_undirected(G_ego_second, node)
