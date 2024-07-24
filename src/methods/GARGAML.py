@@ -4,11 +4,11 @@ import numpy as np
 
 from tqdm import tqdm
 
-from .utils.measure_functions_undirected import measure_1_function, measure_2_function, measure_3_function
+from .utils.measure_functions_undirected import *
 from .utils.measure_functions_directed import *
 from .utils.neighbourhood_functions import summaries_neighbourhoors_node, degree_neighbours_node, GARG_AML_nodeselection
 
-def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
+def GARG_AML_node_directed_measures(node, G_copy, G_copy_und, G_copy_rev):
     G_ego_second_und = nx.ego_graph(G_copy_und, node, 2) #Use both incoming and outgoing edges
     G_ego_second = nx.subgraph(G_copy, G_ego_second_und.nodes)
     G_ego_second_rev = nx.ego_graph(G_copy_rev, node, 2) #Look at the reverse graph to get the incoming edges
@@ -31,6 +31,11 @@ def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
     measure_21 = measure_21_function(adj_full, size_0, size_1, size_2)
     measure_22 = measure_22_function(adj_full, size_2)
 
+    return(measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22)
+
+def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
+    measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22 = GARG_AML_node_directed_measures(node, G_copy, G_copy_und, G_copy_rev)
+    
     measure_high = np.mean([measure_01, measure_12])
     measure_low = np.mean([measure_10, measure_21, measure_00, measure_02, measure_11, measure_20, measure_22])
 
@@ -38,7 +43,7 @@ def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
     
     return(measure)
 
-def GARG_AML_node_undirected(node, G_copy):
+def GARG_AML_node_undirected_measures(node, G_copy):
     G_ego_second = nx.ego_graph(G_copy, node, 2)
     
     # nodes_ordered are the nodes ordered as node, 2nd order and 1st order neighbours
@@ -56,6 +61,11 @@ def GARG_AML_node_undirected(node, G_copy):
     measure_1 = measure_1_function(piece_1_dim, adj_full)
     measure_2 = measure_2_function(piece_1_dim, piece_2_dim, adj_full)
     measure_3 = measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full)
+
+    return(measure_1, measure_2, measure_3)
+    
+def GARG_AML_node_undirected(node, G_copy):
+    measure_1, measure_2, measure_3 = GARG_AML_node_undirected_measures(node, G_copy)
     
     measure = measure_2 - (measure_1 + measure_3)/2
 
