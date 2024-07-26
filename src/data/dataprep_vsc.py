@@ -1,11 +1,5 @@
 # LOAD MODULES
 # Standard library
-import os
-import sys
-DIR = "../"
-os.chdir(DIR)
-sys.path.append(DIR)
-
 import pandas as pd
 
 def main(split=False):
