@@ -5,24 +5,25 @@ os.chdir(DIR)
 sys.path.append(DIR)
 
 import pandas as pd
+from tqdm import tqdm
 
 from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
 from src.methods.GARGAML import GARG_AML_node_undirected_measures
 
-dataset = "LI-Large"
+dataset = "HI-Small"
 path = "data/"+dataset+"_Trans.csv"
 directed = False
 
 G = construct_IBM_graph(path=path, directed = directed)
-G_reduced = graph_community(G, 10)
+G_reduced = graph_community(G)
 measure_1_list = []
 measure_2_list = []
 measure_3_list = []
 
 nodes = list(G_reduced.nodes)
 
-for node in nodes:
+for node in tqdm(nodes):
     measure_1, measure_2, measure_3 = GARG_AML_node_undirected_measures(node, G_reduced)
     measure_1_list.append(measure_1)
     measure_2_list.append(measure_2)

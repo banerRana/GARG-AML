@@ -35,10 +35,20 @@ def GARG_AML_node_directed_measures(node, G_copy, G_copy_und, G_copy_rev):
 
 def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
     measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22 = GARG_AML_node_directed_measures(node, G_copy, G_copy_und, G_copy_rev)
+
+    # Based on the given direction
     measure_high = np.mean([measure_01, measure_12])
     measure_low = np.mean([measure_10, measure_21, measure_00, measure_02, measure_11, measure_20, measure_22])
     measure = measure_high - measure_low
-    return(measure)
+
+    # Based on the transpose
+    measure_high_transpose = np.mean([measure_10, measure_21])
+    measure_low_transpose = np.mean([measure_01, measure_12, measure_00, measure_20, measure_11, measure_02, measure_22])
+    measure_transpose = measure_high_transpose - measure_low_transpose
+
+    measure_final = np.max([measure, measure_transpose])
+    
+    return(measure_final)
 
 def GARG_AML_node_undirected_measures(node, G_copy):
     G_ego_second = nx.ego_graph(G_copy, node, 2)

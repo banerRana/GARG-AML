@@ -23,7 +23,7 @@ def gargaml_IF(dataset = "HI-Small", directed = True):
     path = "data/"+dataset+"_Trans.csv"
 
     G = construct_IBM_graph(path=path, directed = directed)
-    G_reduced = graph_community(G, 10)
+    G_reduced = graph_community(G)
 
     G_reduced_und = G_reduced.to_undirected()
     G_reduced_rev = G_reduced.reverse(copy=True)

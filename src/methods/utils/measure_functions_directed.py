@@ -14,12 +14,10 @@ def measure_00_function(adj_full, size_0):
 def measure_01_function(adj_full, size_0, size_1):
     piece_01 = adj_full[:size_0, size_0:size_0 + size_1]
     total_sum_01 = piece_01.sum()
-    reduced_sum_01 = total_sum_01 - size_1# - (size_0 - 1) # Additional term since some second order neighbours can be grouped under group 0
     total_size_01 = piece_01.size
-    reduced_size_01 = total_size_01 - size_1# - (size_0 - 1) # Additional term since some second order neighbours can be grouped under group 0
 
-    if reduced_size_01 > 0:
-        rel_01 = reduced_sum_01/reduced_size_01
+    if total_size_01 > 0:
+        rel_01 = total_sum_01/total_size_01
     else:
         rel_01 = 1 #Since block only contains sure connections => full sum
 
@@ -66,12 +64,10 @@ def measure_11_function(adj_full, size_0, size_1):
 def measure_12_function(adj_full, size_0, size_1, size_2):
     piece_12 = adj_full[size_0:size_0 + size_1, size_0 + size_1:]
     total_sum_12 = piece_12.sum()
-    reduced_sum_12 = total_sum_12# - size_2 # Each should be connected to at least on of the order 2 nodes
     total_size_12 = piece_12.size
-    reduced_size_12 = total_size_12# - size_2
 
-    if reduced_size_12 > 0:
-        rel_12 = reduced_sum_12/reduced_size_12
+    if total_size_12 > 0:
+        rel_12 = total_sum_12/total_size_12
     else:
         rel_12 = 1 #Since block only contains sure connections => full sum
 

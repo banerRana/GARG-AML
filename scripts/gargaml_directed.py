@@ -10,12 +10,12 @@ from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
 from src.methods.GARGAML import GARG_AML_node_directed_measures
 
-dataset = "LI-Large"
+dataset = "HI-Small"
 path = "data/"+dataset+"_Trans.csv"
 directed = True
 
 G = construct_IBM_graph(path=path, directed = directed)
-G_reduced = graph_community(G, 5)
+G_reduced = graph_community(G)
 
 G_reduced_und = G_reduced.to_undirected()
 G_reduced_rev = G_reduced.reverse(copy=True)
