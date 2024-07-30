@@ -25,11 +25,14 @@ def reduce_graph(G, degree_cutoff):
     return(G_copy)
 
 def graph_community(G, resolution=10): # large resolution to have smaller communities
-    G_copy = G.copy()
-
-    directed = nx.is_directed(G_copy)
+    directed = nx.is_directed(G)
     
-    community_list = nx.community.louvain_communities(G_copy, resolution=resolution, seed=1997)
+    if directed:
+        G_undirected = G.copy().to_undirected()
+    else:
+        G_undirected = G.copy()
+
+    community_list = nx.community.louvain_communities(G_undirected, resolution=resolution, seed=1997)
 
     # Create a dictionary to map nodes to their community
     node_community = {}
