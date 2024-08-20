@@ -13,6 +13,12 @@ def create_identifiers(df):
 
     return identifyer_list
 
+def format_number(number):
+    formatted = str(number)
+    if not('.' in formatted and len(formatted.split('.')[1]) >= 2):
+        formatted = format(number, '.2f')
+    return formatted
+
 def create_AML_labels(path= "data/HI-Small_Patterns.txt"):
     transaction_list = []
     fanout_list = []
@@ -96,7 +102,19 @@ def create_AML_labels(path= "data/HI-Small_Patterns.txt"):
     return df_patterns
 
 def define_ML_labels(path_trans="data/HI-Small_Trans.csv", path_patterns="data/HI-Small_Patterns.txt"):
-    transactions_df = pd.read_csv(path_trans, dtype=str)
+    dtype_dict = {
+            "From Bank": str,
+            "To Bank": str,
+            "Account": str,
+            "Account.1": str
+        }
+
+    transactions_df = pd.read_csv(path_trans, dtype=dtype_dict)
+
+    columns_money = ['Amount Received', 'Amount Paid']
+    for col in columns_money: # make sure monetary amounts have two decimals
+        transactions_df[col] = transactions_df[col].apply(lambda x: format_number(x))
+
     transactions_df['Is Laundering'] = transactions_df['Is Laundering'].astype(int)
     
     identifyer_list = create_identifiers(transactions_df)
