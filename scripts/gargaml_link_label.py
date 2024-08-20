@@ -11,8 +11,7 @@ import matplotlib.pyplot as plt
 
 from src.data.pattern_construction import define_ML_labels
 
-import scienceplots
-plt.style.use(['science','notebook'])
+plt.style.use('bmh')
 
 
 def define_gargaml_scores_directed(results_df_measures):
@@ -95,13 +94,17 @@ def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, patte
 
     dir_string = "directed" if directed else "undirected"
     laundering_df[laundering_df["GARGAML"]!=-2].groupby("GARGAML_rounded")[pattern_columns].mean().plot(alpha=0.7, figsize=(10, 7))
-    plt.title(dataset+" - "+dir_string+" - "+name)
-    plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+"_"+name+".pdf")
+    if name is None:
+        plt.title(dataset+" - "+dir_string)
+        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+".pdf")
+    else:
+        plt.title(dataset+" - "+dir_string+" - "+name)
+        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+"_"+name+".pdf")
     plt.close()
 
 def main():
     dataset = "HI-Small"  
-    directed = False
+    directed = True
 
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",
@@ -124,7 +127,7 @@ def main():
     trans_to.columns = ["Account", "Is Laundering"]+pattern_columns
     laundering_combined = pd.concat([trans_from, trans_to]).groupby("Account").mean()
 
-    combine_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name='Combined')
+    combine_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name=None)
     combine_patterns_GARGAML(results_df, laundering_from, dataset, directed, pattern_columns, name='Sender')
     combine_patterns_GARGAML(results_df, laundering_to, dataset, directed, pattern_columns, name='Receiver')
 
