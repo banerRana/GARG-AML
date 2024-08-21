@@ -13,6 +13,8 @@ from src.data.pattern_construction import define_ML_labels
 
 plt.style.use('bmh')
 
+def calculate_score_directed(measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22, score_type="vanilla"):
+    pass
 
 def define_gargaml_scores_directed(results_df_measures):
     nodes = []
@@ -55,17 +57,30 @@ def define_gargaml_scores_directed(results_df_measures):
     results_df.set_index("node", inplace=True)
     return results_df
 
-def define_gargaml_scores_undirected(results_df_measures):
+def calculate_score_undirected(line, score_type="basic"):
+    measure_1 = line["measure_1"]
+    measure_2 = line["measure_2"]
+    measure_3 = line["measure_3"]
+    
+    if score_type == "basic":
+        measure = measure_2 - (measure_1 + measure_3)/2
+    
+    elif score_type == "weighted_average":
+        size_1 = line["size_1"]
+        size_3 = line["size_3"]
+        try:
+            measure = measure_2 - (size_1*measure_1 + size_3*measure_3)/(size_1 + size_3)
+        except:
+            measure = measure_2 #both sizes are 0, so only measure_2 is relevant
+
+    return measure
+
+def define_gargaml_scores_undirected(results_df_measures, score_type="basic"):
     nodes = []
     gargaml = []
 
     for i,line in results_df_measures.iterrows():
-        measure_1 = line["measure_1"]
-        measure_2 = line["measure_2"]
-        measure_3 = line["measure_3"]
-
-        measure = measure_2 - (measure_1 + measure_3)/2
-
+        measure = calculate_score_undirected(line, score_type=score_type)
         nodes.append(line["node"])
         gargaml.append(measure)
 
@@ -78,7 +93,7 @@ def define_gargaml_scores_undirected(results_df_measures):
     results_df.set_index("node", inplace=True)
     return results_df
 
-def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, pattern_columns, name='Combined'):
+def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, pattern_columns, name='Combined', score_type="basic"):
     gargaml_scores = []
     for account in laundering_df.index:
         try:
@@ -96,15 +111,16 @@ def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, patte
     laundering_df[laundering_df["GARGAML"]!=-2].groupby("GARGAML_rounded")[pattern_columns].mean().plot(alpha=0.7, figsize=(10, 7))
     if name is None:
         plt.title(dataset+" - "+dir_string)
-        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+".pdf")
+        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+"_"+score_type+".pdf")
     else:
         plt.title(dataset+" - "+dir_string+" - "+name)
-        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+"_"+name+".pdf")
+        plt.savefig("results/"+dataset+"_GARGAML_"+dir_string+"_"+name+"_"+score_type+".pdf")
     plt.close()
 
 def main():
     dataset = "HI-Small"  
     directed = True
+    score_type = "basic"
 
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",
@@ -117,7 +133,7 @@ def main():
     if directed:
         results_df = define_gargaml_scores_directed(results_df_measures)
     else:
-        results_df = define_gargaml_scores_undirected(results_df_measures)
+        results_df = define_gargaml_scores_undirected(results_df_measures, score_type=score_type)
 
     laundering_from = transactions_df_extended[["Account", "Is Laundering"]+pattern_columns].groupby("Account").mean()
     laundering_to = transactions_df_extended[["Account.1", "Is Laundering"]+pattern_columns].groupby("Account.1").mean()

@@ -9,7 +9,7 @@ def measure_1_function(piece_1_dim, adj_full):
     else:
         rel_1 = 0
         
-    return rel_1 
+    return rel_1, reduced_size_1 
 
 def measure_2_function(piece_1_dim, piece_2_dim, adj_full):
     piece_2 = adj_full[piece_1_dim[0]:piece_1_dim[0]+piece_2_dim[0], :piece_2_dim[1]]
@@ -23,7 +23,7 @@ def measure_2_function(piece_1_dim, piece_2_dim, adj_full):
     else:
         rel_2 = 0
         
-    return rel_2
+    return rel_2, reduced_size_2
 
 def measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full):
     piece_3 = adj_full[piece_1_dim[0]:, piece_2_dim[1]:]
@@ -36,5 +36,5 @@ def measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full):
     else:
         rel_3 = 0
     
-    return rel_3
+    return rel_3, reduced_size_3
 

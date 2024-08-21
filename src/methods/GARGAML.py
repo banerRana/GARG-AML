@@ -50,7 +50,7 @@ def GARG_AML_node_directed(node, G_copy, G_copy_und, G_copy_rev):
     
     return(measure_final)
 
-def GARG_AML_node_undirected_measures(node, G_copy):
+def GARG_AML_node_undirected_measures(node, G_copy, include_size = False):
     G_ego_second = nx.ego_graph(G_copy, node, 2)
     
     # nodes_ordered are the nodes ordered as node, 2nd order and 1st order neighbours
@@ -65,11 +65,14 @@ def GARG_AML_node_undirected_measures(node, G_copy):
     piece_2_dim = [size_first, size_second + 1]
     piece_3_dim = [size_first, size_first]
     
-    measure_1 = measure_1_function(piece_1_dim, adj_full)
-    measure_2 = measure_2_function(piece_1_dim, piece_2_dim, adj_full)
-    measure_3 = measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full)
+    measure_1, size_1 = measure_1_function(piece_1_dim, adj_full)
+    measure_2, size_2 = measure_2_function(piece_1_dim, piece_2_dim, adj_full)
+    measure_3, size_3 = measure_3_function(piece_1_dim, piece_2_dim, piece_3_dim, adj_full)
 
-    return(measure_1, measure_2, measure_3)
+    if include_size:
+        return(measure_1, measure_2, measure_3, size_1, size_2, size_3)
+    else:
+        return(measure_1, measure_2, measure_3)
     
 def GARG_AML_node_undirected(node, G_copy):
     measure_1, measure_2, measure_3 = GARG_AML_node_undirected_measures(node, G_copy)
