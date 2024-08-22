@@ -70,14 +70,14 @@ def calculate_score_directed(line, score_type="basic"):
 
     return measure, measure_transpose
 
-def define_gargaml_scores_directed(results_df_measures):
+def define_gargaml_scores_directed(results_df_measures, score_type="basic"):
     nodes = []
     gargaml = []
     transposed_gargaml = []
     max_gargaml = []
 
     for i,line in results_df_measures.iterrows():
-        measure, measure_transpose = calculate_score_directed(line)
+        measure, measure_transpose = calculate_score_directed(line, score_type=score_type)
 
         nodes.append(line["node"])
         gargaml.append(measure)
@@ -157,7 +157,7 @@ def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, patte
 
 def main():
     dataset = "HI-Small"  
-    directed = False
+    directed = True
     score_type = "weighted_average"
 
     transactions_df_extended, pattern_columns = define_ML_labels(
