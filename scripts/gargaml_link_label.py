@@ -13,8 +13,46 @@ from src.data.pattern_construction import define_ML_labels
 
 plt.style.use('bmh')
 
-def calculate_score_directed(measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22, score_type="vanilla"):
-    pass
+def calculate_score_directed(line, score_type="basic"):
+    measure_00 = line["measure_00"]
+    measure_01 = line["measure_01"]
+    measure_02 = line["measure_02"]
+    measure_10 = line["measure_10"]
+    measure_11 = line["measure_11"]
+    measure_12 = line["measure_12"]
+    measure_20 = line["measure_20"]
+    measure_21 = line["measure_21"]
+    measure_22 = line["measure_22"]
+
+    if score_type == "basic":
+        measure_high = np.mean([measure_01, measure_12])
+        measure_low = np.mean([measure_10, measure_21, measure_00, measure_02, measure_11, measure_20, measure_22])
+        measure = measure_high - measure_low
+
+        measure_high_transpose = np.mean([measure_10, measure_21])
+        measure_low_transpose = np.mean([measure_01, measure_12, measure_00, measure_20, measure_11, measure_02, measure_22])
+        measure_transpose = measure_high_transpose - measure_low_transpose
+
+    elif score_type == "weighted_average":
+        size_00 = line["size_00"]
+        size_01 = line["size_01"]
+        size_02 = line["size_02"]
+        size_10 = line["size_10"]
+        size_11 = line["size_11"]
+        size_12 = line["size_12"]
+        size_20 = line["size_20"]
+        size_21 = line["size_21"]
+        size_22 = line["size_22"]
+
+        measure_high = (size_01*measure_01 + size_12*measure_12)/(size_01 + size_12)
+        measure_low = (size_10*measure_10 + size_21*measure_21 + size_00*measure_00 + size_02*measure_02 + size_11*measure_11 + size_20*measure_20 + size_22*measure_22)/(size_10 + size_21 + size_00 + size_02 + size_11 + size_20 + size_22)
+        measure = measure_high - measure_low
+
+        measure_high_transpose = (size_10*measure_10 + size_21*measure_21)/(size_10 + size_21)
+        measure_low_transpose = (size_01*measure_01 + size_12*measure_12 + size_00*measure_00 + size_20*measure_20 + size_11*measure_11 + size_02*measure_02 + size_22*measure_22)/(size_01 + size_12 + size_00 + size_20 + size_11 + size_02 + size_22)
+        measure_transpose = measure_high_transpose - measure_low_transpose
+
+    return measure, measure_transpose
 
 def define_gargaml_scores_directed(results_df_measures):
     nodes = []
@@ -23,23 +61,7 @@ def define_gargaml_scores_directed(results_df_measures):
     max_gargaml = []
 
     for i,line in results_df_measures.iterrows():
-        measure_00 = line["measure_00"]
-        measure_01 = line["measure_01"]
-        measure_02 = line["measure_02"]
-        measure_10 = line["measure_10"]
-        measure_11 = line["measure_11"]
-        measure_12 = line["measure_12"]
-        measure_20 = line["measure_20"]
-        measure_21 = line["measure_21"]
-        measure_22 = line["measure_22"]
-
-        measure_high = np.mean([measure_01, measure_12])
-        measure_low = np.mean([measure_10, measure_21, measure_00, measure_02, measure_11, measure_20, measure_22])
-        measure = measure_high - measure_low
-
-        measure_high_transpose = np.mean([measure_10, measure_21])
-        measure_low_transpose = np.mean([measure_01, measure_12, measure_00, measure_20, measure_11, measure_02, measure_22])
-        measure_transpose = measure_high_transpose - measure_low_transpose
+        measure, measure_transpose = calculate_score_directed(line)
 
         nodes.append(line["node"])
         gargaml.append(measure)
