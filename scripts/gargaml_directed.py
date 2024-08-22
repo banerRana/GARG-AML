@@ -78,7 +78,16 @@ data_dict = {
     "measure_12": measure_12_list,
     "measure_20": measure_20_list,
     "measure_21": measure_21_list,
-    "measure_22": measure_22_list
+    "measure_22": measure_22_list, 
+    "size_00": size_00_list,
+    "size_01": size_01_list,
+    "size_02": size_02_list,
+    "size_10": size_10_list,
+    "size_11": size_11_list,
+    "size_12": size_12_list,
+    "size_20": size_20_list,
+    "size_21": size_21_list,
+    "size_22": size_22_list
 }
 
 df = pd.DataFrame(data_dict)
