@@ -153,7 +153,7 @@ def main():
     results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
 
     if directed:
-        results_df = define_gargaml_scores_directed(results_df_measures)
+        results_df = define_gargaml_scores_directed(results_df_measures, score_type=score_type)
     else:
         results_df = define_gargaml_scores_undirected(results_df_measures, score_type=score_type)
 
@@ -165,8 +165,8 @@ def main():
     trans_to.columns = ["Account", "Is Laundering"]+pattern_columns
     laundering_combined = pd.concat([trans_from, trans_to]).groupby("Account").mean()
 
-    combine_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name=None)
-    combine_patterns_GARGAML(results_df, laundering_from, dataset, directed, pattern_columns, name='Sender')
-    combine_patterns_GARGAML(results_df, laundering_to, dataset, directed, pattern_columns, name='Receiver')
+    combine_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name=None, score_type=score_type)
+    combine_patterns_GARGAML(results_df, laundering_from, dataset, directed, pattern_columns, name='Sender', score_type=score_type)
+    combine_patterns_GARGAML(results_df, laundering_to, dataset, directed, pattern_columns, name='Receiver', score_type=score_type)
 
 main()
