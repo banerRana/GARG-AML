@@ -44,12 +44,28 @@ def calculate_score_directed(line, score_type="basic"):
         size_21 = line["size_21"]
         size_22 = line["size_22"]
 
-        measure_high = (size_01*measure_01 + size_12*measure_12)/(size_01 + size_12)
-        measure_low = (size_10*measure_10 + size_21*measure_21 + size_00*measure_00 + size_02*measure_02 + size_11*measure_11 + size_20*measure_20 + size_22*measure_22)/(size_10 + size_21 + size_00 + size_02 + size_11 + size_20 + size_22)
+        try:
+            measure_high = (size_01*measure_01 + size_12*measure_12)/(size_01 + size_12)
+        except:
+            measure_high = measure_01 + measure_12 #both sizes are 0, revert to basic measure
+
+        try:
+            measure_low = (size_10*measure_10 + size_21*measure_21 + size_00*measure_00 + size_02*measure_02 + size_11*measure_11 + size_20*measure_20 + size_22*measure_22)/(size_10 + size_21 + size_00 + size_02 + size_11 + size_20 + size_22)
+        except:
+            measure_low = measure_10 + measure_21 + measure_00 + measure_02 + measure_11 + measure_20 + measure_22 #all sizes are 0, revert to basic measure
+
         measure = measure_high - measure_low
 
-        measure_high_transpose = (size_10*measure_10 + size_21*measure_21)/(size_10 + size_21)
-        measure_low_transpose = (size_01*measure_01 + size_12*measure_12 + size_00*measure_00 + size_20*measure_20 + size_11*measure_11 + size_02*measure_02 + size_22*measure_22)/(size_01 + size_12 + size_00 + size_20 + size_11 + size_02 + size_22)
+        try:
+            measure_high_transpose = (size_10*measure_10 + size_21*measure_21)/(size_10 + size_21)
+        except:
+            measure_high_transpose = measure_10 + measure_21 #both sizes are 0, revert to basic measure
+        
+        try:
+            measure_low_transpose = (size_01*measure_01 + size_12*measure_12 + size_00*measure_00 + size_20*measure_20 + size_11*measure_11 + size_02*measure_02 + size_22*measure_22)/(size_01 + size_12 + size_00 + size_20 + size_11 + size_02 + size_22)
+        except:
+            measure_low_transpose = measure_01 + measure_12 + measure_00 + measure_20 + measure_11 + measure_02 + measure_22 #all sizes are 0, revert to basic measure
+        
         measure_transpose = measure_high_transpose - measure_low_transpose
 
     return measure, measure_transpose
@@ -141,8 +157,8 @@ def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, patte
 
 def main():
     dataset = "HI-Small"  
-    directed = True
-    score_type = "basic"
+    directed = False
+    score_type = "weighted_average"
 
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",

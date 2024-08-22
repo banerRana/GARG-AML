@@ -9,7 +9,7 @@ def measure_00_function(adj_full, size_0):
     else:
         rel_00 = 0
 
-    return rel_00
+    return rel_00, reduced_size_00
 
 def measure_01_function(adj_full, size_0, size_1):
     piece_01 = adj_full[:size_0, size_0:size_0 + size_1]
@@ -21,7 +21,7 @@ def measure_01_function(adj_full, size_0, size_1):
     else:
         rel_01 = 1 #Since block only contains sure connections => full sum
 
-    return rel_01
+    return rel_01, total_size_01
 
 def measure_02_function(adj_full, size_0, size_1, size_2):
     piece_02 = adj_full[:size_0, size_0 + size_1:]
@@ -34,7 +34,7 @@ def measure_02_function(adj_full, size_0, size_1, size_2):
     else:
         rel_02 = 0
     
-    return rel_02
+    return rel_02, reduced_size_02
 
 def measure_10_function(adj_full, size_0, size_1):
     piece_10 = adj_full[size_0:size_0 + size_1, :size_0]
@@ -46,7 +46,7 @@ def measure_10_function(adj_full, size_0, size_1):
     else:
         rel_10 = 0
     
-    return rel_10
+    return rel_10, total_size_10
 
 def measure_11_function(adj_full, size_0, size_1):
     piece_11 = adj_full[size_0:size_0 + size_1, size_0:size_0 + size_1]
@@ -59,7 +59,7 @@ def measure_11_function(adj_full, size_0, size_1):
     else:
         rel_11 = 0
     
-    return rel_11
+    return rel_11, reduced_size_11
 
 def measure_12_function(adj_full, size_0, size_1, size_2):
     piece_12 = adj_full[size_0:size_0 + size_1, size_0 + size_1:]
@@ -71,7 +71,7 @@ def measure_12_function(adj_full, size_0, size_1, size_2):
     else:
         rel_12 = 1 #Since block only contains sure connections => full sum
 
-    return rel_12
+    return rel_12, total_size_12
 
 def measure_20_function(adj_full, size_0, size_2):
     piece_20 = adj_full[-size_2:, :size_0]
@@ -84,7 +84,7 @@ def measure_20_function(adj_full, size_0, size_2):
     else:
         rel_20 = 0
     
-    return rel_20
+    return rel_20, reduced_size_20
 
 def measure_21_function(adj_full, size_0, size_1, size_2):
     piece_21 = adj_full[-size_2:, size_0:size_0 + size_1]
@@ -96,7 +96,7 @@ def measure_21_function(adj_full, size_0, size_1, size_2):
     else:
         rel_21 = 0
     
-    return rel_21
+    return rel_21, total_size_21
 
 def measure_22_function(adj_full, size_2):
     piece_22 = adj_full[-size_2:, -size_2:]
@@ -109,4 +109,4 @@ def measure_22_function(adj_full, size_2):
     else:
         rel_22 = 0
     
-    return rel_22
+    return rel_22, reduced_size_22

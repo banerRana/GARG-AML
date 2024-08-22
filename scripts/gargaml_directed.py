@@ -30,10 +30,24 @@ measure_20_list = []
 measure_21_list = []
 measure_22_list = []
 
+size_00_list = []
+size_01_list = []
+size_02_list = []
+size_10_list = []
+size_11_list = []
+size_12_list = []
+size_20_list = []
+size_21_list = []
+size_22_list = []
+
 nodes = list(G_reduced.nodes)
 
 for node in nodes:
-    measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22 = GARG_AML_node_directed_measures(node, G_reduced, G_reduced_und, G_reduced_rev)
+    (
+        measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22, 
+        size_00, size_01, size_02, size_10, size_11, size_12, size_20, size_21, size_22 
+    ) = GARG_AML_node_directed_measures(node, G_reduced, G_reduced_und, G_reduced_rev, include_size=True)
+    
     measure_00_list.append(measure_00)
     measure_01_list.append(measure_01)
     measure_02_list.append(measure_02)
@@ -43,6 +57,16 @@ for node in nodes:
     measure_20_list.append(measure_20)
     measure_21_list.append(measure_21)
     measure_22_list.append(measure_22)
+
+    size_00_list.append(size_00)
+    size_01_list.append(size_01)
+    size_02_list.append(size_02)
+    size_10_list.append(size_10)
+    size_11_list.append(size_11)
+    size_12_list.append(size_12)
+    size_20_list.append(size_20)
+    size_21_list.append(size_21)
+    size_22_list.append(size_22)
 
 data_dict = {
     "node": nodes,
