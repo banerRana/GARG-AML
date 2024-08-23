@@ -5,6 +5,7 @@ os.chdir(DIR)
 sys.path.append(DIR)
 
 import pandas as pd
+from tqdm import tqdm
 
 from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
@@ -42,7 +43,7 @@ size_22_list = []
 
 nodes = list(G_reduced.nodes)
 
-for node in nodes:
+for node in tqdm(nodes):
     (
         measure_00, measure_01, measure_02, measure_10, measure_11, measure_12, measure_20, measure_21, measure_22, 
         size_00, size_01, size_02, size_10, size_11, size_12, size_20, size_21, size_22 
