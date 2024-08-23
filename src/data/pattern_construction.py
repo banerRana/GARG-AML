@@ -140,3 +140,14 @@ def define_ML_labels(path_trans="data/HI-Small_Trans.csv", path_patterns="data/H
     pattern_columns.append("Not Classified")
 
     return transactions_df_extended, pattern_columns
+
+def summarise_ML_labels(transactions_df_extended, pattern_columns):
+    laundering_from = transactions_df_extended[["Account", "Is Laundering"]+pattern_columns].groupby("Account").mean()
+    laundering_to = transactions_df_extended[["Account.1", "Is Laundering"]+pattern_columns].groupby("Account.1").mean()
+    
+    trans_from=transactions_df_extended[["Account", "Is Laundering"]+pattern_columns]
+    trans_to=transactions_df_extended[["Account.1", "Is Laundering"]+pattern_columns]
+    trans_to.columns = ["Account", "Is Laundering"]+pattern_columns
+    laundering_combined = pd.concat([trans_from, trans_to]).groupby("Account").mean()
+
+    return laundering_combined, laundering_from, laundering_to
