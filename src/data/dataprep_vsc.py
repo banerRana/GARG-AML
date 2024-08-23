@@ -37,4 +37,5 @@ def main(split=True):
 
         full_data_set.to_csv("data/LI-Large_Trans_vsc.csv", index=False)
 
-main()
+if __name__ == "__main__":
+    main()
