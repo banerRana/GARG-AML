@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from .utils.measure_functions_undirected import *
 from .utils.measure_functions_directed import *
-from .utils.neighbourhood_functions import summaries_neighbourhoors_node, degree_neighbours_node, GARG_AML_nodeselection
+from .utils.neighbourhood_functions import summaries_neighbourhoors_node, degree_neighbours_node, GARG_AML_nodeselection, combine_GARG_AML
 
 def GARG_AML_node_directed_measures(node, G_copy, G_copy_und, G_copy_rev, include_size = False):
     G_ego_second_und = nx.ego_graph(G_copy_und, node, 2) #Use both incoming and outgoing edges
@@ -91,45 +91,6 @@ def GARG_AML_node(node, G_copy, G_copy_und=None, G_copy_rev=None, directed = Fal
     else:
         return(GARG_AML_node_undirected(node, G_copy))
     
-
-def combine_GARG_AML(G_selection, measures_dict, summary_dict, neigh_degree_dict):
-    degree_df = pd.DataFrame(
-        dict(
-            G_selection.degree()
-        ), 
-        index = ["Degree"]
-    ).transpose()
-    
-    measures_df = pd.DataFrame(
-        measures_dict, 
-        index = ["GARGAML"]
-    ).transpose()
-
-    summary_df = pd.DataFrame(
-        summary_dict, 
-        index = ["ScoreMin", "ScoreMean", "ScoreMax"]
-    ).transpose()
-
-    neigh_degree_df = pd.DataFrame(
-        neigh_degree_dict,
-        index = ["DegMin", "DegMean", "DegMax"]
-    ).transpose()
-    
-    GARG_AML_df = measures_df.merge(
-        summary_df,
-        left_index = True, 
-        right_index = True
-    ).merge(
-        degree_df, 
-        left_index = True, 
-        right_index = True
-    ).merge(
-        neigh_degree_df,
-        left_index = True, 
-        right_index = True
-    )
-    
-    return(GARG_AML_df)
 
 def GARG_AML(G_reduced): # The method works with a pre-processed graph. G_reduced is the graph with the degree cutoff applied.
     directed = nx.is_directed(G_reduced)

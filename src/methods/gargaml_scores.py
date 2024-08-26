@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+from .utils.neighbourhood_functions import summaries_neighbourhoors_node, degree_neighbours_node, combine_GARG_AML
 
 def calculate_score_directed(line, score_type="basic"):
     measure_00 = line["measure_00"]
@@ -125,3 +126,20 @@ def define_gargaml_scores(results_df_measures, directed, score_type="basic"):
         return define_gargaml_scores_directed(results_df_measures, score_type=score_type)
     else:
         return define_gargaml_scores_undirected(results_df_measures, score_type=score_type)
+    
+def summarise_gargaml_scores(G_reduced, df_results, columns = ["GARGAML"]):
+    G_degree_dict = dict(G_reduced.degree())
+    nodes = list(df_results.index)
+
+    gargaml_values = dict(zip(df_results.index, df_results["GARGAML"]))
+
+    summaries_neighbourhood = dict()
+    summaries_degree = dict()
+
+    for node in nodes:
+        summaries_neighbourhood[node] = summaries_neighbourhoors_node(node, G_reduced, gargaml_values)
+        summaries_degree[node] = degree_neighbours_node(node, G_reduced, G_degree_dict)
+    
+    GARGAML_df = combine_GARG_AML(G_reduced, gargaml_values, summaries_neighbourhood, summaries_degree)
+
+    return GARGAML_df[columns]
