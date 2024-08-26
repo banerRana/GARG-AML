@@ -9,22 +9,14 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from src.data.pattern_construction import define_ML_labels, summarise_ML_labels
+from src.data.pattern_construction import define_ML_labels, summarise_ML_labels, combine_patterns_GARGAML
 from src.methods.gargaml_scores import define_gargaml_scores
 
 plt.style.use('bmh')
 
-def combine_patterns_GARGAML(results_df, laundering_df, dataset, directed, pattern_columns, name='Combined', score_type="basic"):
-    gargaml_scores = []
-    for account in laundering_df.index:
-        try:
-            line=results_df.loc[account]
-            gargaml_scores.append(line["GARGAML"])
-        except:
-            gargaml_scores.append(-2)
-
-    laundering_df["GARGAML"] = gargaml_scores
-
+def plot_patterns_GARGAML(results_df, laundering_df, dataset, directed, pattern_columns, name=None, score_type="basic"):
+    laundering_df["GARGAML"] = combine_patterns_GARGAML(results_df, laundering_df)["GARGAML"]
+    
     laundering_df["GARGAML_rounded"] = [round(x, 1) for x in laundering_df["GARGAML"]]
 
 
@@ -55,9 +47,9 @@ def main():
 
     laundering_combined, laundering_from, laundering_to = summarise_ML_labels(transactions_df_extended,pattern_columns)
 
-    combine_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name=None, score_type=score_type)
-    combine_patterns_GARGAML(results_df, laundering_from, dataset, directed, pattern_columns, name='Sender', score_type=score_type)
-    combine_patterns_GARGAML(results_df, laundering_to, dataset, directed, pattern_columns, name='Receiver', score_type=score_type)
+    plot_patterns_GARGAML(results_df, laundering_combined, dataset, directed, pattern_columns, name=None, score_type=score_type)
+    plot_patterns_GARGAML(results_df, laundering_from, dataset, directed, pattern_columns, name='Sender', score_type=score_type)
+    plot_patterns_GARGAML(results_df, laundering_to, dataset, directed, pattern_columns, name='Receiver', score_type=score_type)
 
 if __name__ == "__main__":
     main()

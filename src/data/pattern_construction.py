@@ -151,3 +151,17 @@ def summarise_ML_labels(transactions_df_extended, pattern_columns):
     laundering_combined = pd.concat([trans_from, trans_to]).groupby("Account").mean()
 
     return laundering_combined, laundering_from, laundering_to
+
+def combine_patterns_GARGAML(results_df, laundering_df, columns = ["GARGAML"]):
+    # This function can take multiple columns as input and return a dictionary of scores for each column
+    scores_dict = {column: [] for column in columns} 
+
+    for account in laundering_df.index:
+        for column in columns:
+            try:
+                line = results_df.loc[account]
+                scores_dict[column].append(line[column])
+            except:
+                scores_dict[column].append(-2)
+    
+    return scores_dict
