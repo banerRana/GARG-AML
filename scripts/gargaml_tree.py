@@ -26,7 +26,7 @@ from sklearn.metrics import average_precision_score
 from pickle import dump
 
 def gargaml_tree(X, y):
-    clf = tree.DecisionTreeClassifier()
+    clf = tree.DecisionTreeClassifier(min_samples_leaf=10)
     clf = clf.fit(X, y)
 
     with open("results/model_tree.pkl", "wb") as f:
@@ -35,10 +35,10 @@ def gargaml_tree(X, y):
     return clf
 
 def gargaml_boosting(X, y):
-    clf = ensemble.GradientBoostingClassifier()
+    clf = ensemble.GradientBoostingClassifier(min_samples_leaf=10, random_state=1997)
     clf = clf.fit(X, y)
 
-    with open("results/model_xgb.pkl", "wb") as f:
+    with open("results/model_boosting.pkl", "wb") as f:
         dump(clf, f, protocol=5)
 
     return clf
@@ -93,11 +93,19 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1997, stratify=y)
 
-    gargaml_clf = gargaml_tree(X_train, y_train)
+    tree_clf = gargaml_tree(X_train, y_train)
 
-    AUC_ROC, AUC_PR = evaluate_model(gargaml_clf, X_test, y_test)
+    AUC_ROC, AUC_PR = evaluate_model(tree_clf, X_test, y_test)
 
+    print("Tree")
+    print("AUC ROC: ", AUC_ROC)
+    print("AUC PR: ", AUC_PR)
 
+    boosting_clf = gargaml_boosting(X_train, y_train)
+
+    AUC_ROC, AUC_PR = evaluate_model(boosting_clf, X_test, y_test)
+
+    print("Boosting")
     print("AUC ROC: ", AUC_ROC)
     print("AUC PR: ", AUC_PR)
 
