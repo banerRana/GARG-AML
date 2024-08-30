@@ -20,8 +20,7 @@ from sklearn import tree
 from sklearn import ensemble
 from sklearn.model_selection import train_test_split
 
-from sklearn.metrics import roc_auc_score
-from sklearn.metrics import average_precision_score
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 from pickle import dump
 
@@ -43,15 +42,38 @@ def gargaml_boosting(X, y):
 
     return clf
 
-def evaluate_model(clf, X_test, y_test):
+def evaluate_model(clf, X_test, y_test, plot=False):
     y_pred = clf.predict(X_test)
     AUC_ROC = roc_auc_score(y_test, y_pred)
     AUC_PR = average_precision_score(y_test, y_pred)
+
+
+    if plot:
+        from sklearn.metrics import roc_curve, precision_recall_curve
+        fpr, tpr, _ = roc_curve(y_test, y_pred)
+        precision, recall, _ = precision_recall_curve(y_test, y_pred)
+
+        plt.figure(figsize=(10, 7))
+        plt.subplot(2, 1, 1)
+        plt.plot(fpr, tpr)
+        plt.title("ROC Curve")
+        plt.xlabel("FPR")
+        plt.ylabel("TPR")
+
+        plt.subplot(2, 1, 2)
+        plt.plot(recall, precision)
+        plt.title("Precision-Recall Curve")
+        plt.xlabel("Recall")
+        plt.ylabel("Precision")
+
+        plt.show()
+
+
     return AUC_ROC, AUC_PR
 
 def main():
     dataset = "HI-Small"  
-    directed = True
+    directed = False
     score_type = "basic"
     target = "SCATTER-GATHER"
     cutoff = 0.2
