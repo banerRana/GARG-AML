@@ -5,7 +5,6 @@ DIR = "./"
 os.chdir(DIR)
 sys.path.append(DIR)
 
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
@@ -38,7 +37,7 @@ def main():
     str_directed = "directed" if directed else "undirected"
     results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
 
-    results_df = define_gargaml_scores(results_df_measures, score_type=score_type)
+    results_df = define_gargaml_scores(results_df_measures, directed, score_type=score_type)
 
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",
