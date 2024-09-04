@@ -40,7 +40,7 @@ def lift_curve_values(y_val, y_pred, steps):
     return(vals_lift)
 
 dataset = "HI-Small"  
-directed = False
+directed = True
 score_type = "basic" # basic or weighted_average
 
 str_directed = "directed" if directed else "undirected"
@@ -61,6 +61,9 @@ to_data = transactions_df_extended[["Account.1", "To Bank"]].drop_duplicates()
 to_data.columns = ["Account", "Bank"]
 total_data = pd.concat([from_data, to_data], axis=0).drop_duplicates()
 
+print("="*10)
+print("Data loaded")
+
 cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
 columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
 
@@ -75,7 +78,7 @@ for i in range(n):
     cut_off = cut_offs[i]
     for j in range(m):
         column = columns[j]
-
+        print(cut_off, column)
         laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
 
         labels = []
@@ -111,6 +114,9 @@ for i in range(n):
 divergence_df = pd.DataFrame(divergence_matrix, columns=columns, index=cut_offs)
 divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_directed+"_combined_divergence.csv")
 
+print("="*10)
+print("Divergence saved")
+
 for axis, col in zip(axes[0], columns):
     axis.set_title(col)
 
@@ -119,8 +125,11 @@ for axis, row in zip(axes[:,0], cut_offs):
 
 fig.suptitle('Distribution of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
 fig.tight_layout()
-
 plt.savefig("results/"+dataset+"_GARGAML_"+str_directed+"_combined_histogram.pdf")
+plt.close()
+
+print("="*10)
+print("Figure distributions saved")
 
 fig, axes = plt.subplots(n, m, figsize = (n*5, m))
 values = np.linspace(0.01, 1, 100)
@@ -129,7 +138,7 @@ for i in range(n):
     cut_off = cut_offs[i]
     for j in range(m):
         column = columns[j]
-
+        print(cut_off, column)
         laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
 
         labels = []
@@ -151,5 +160,8 @@ for axis, row in zip(axes[:,0], cut_offs):
 
 fig.suptitle('Lift curve of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
 fig.tight_layout()
-
 plt.savefig("results/"+dataset+"_GARGAML_"+str_directed+"_combined_lift.pdf")
+plt.close()
+
+print("="*10)
+print("Figure lift saved")
