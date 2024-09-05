@@ -21,7 +21,7 @@ def measure_2_function(piece_1_dim, piece_2_dim, adj_full):
     if reduced_size_2 > 0:
         rel_2 = reduced_sum_2/reduced_size_2
     else:
-        rel_2 = 0
+        rel_2 = 1
         
     return rel_2, reduced_size_2
 

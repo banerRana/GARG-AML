@@ -37,12 +37,12 @@ def calculate_score_directed(line, score_type="basic"):
         try:
             measure_high = (size_01*measure_01 + size_12*measure_12)/(size_01 + size_12)
         except:
-            measure_high = measure_01 + measure_12 #both sizes are 0, revert to basic measure
+            measure_high = np.mean(measure_01, measure_12) #both sizes are 0, revert to basic measure
 
         try:
             measure_low = (size_10*measure_10 + size_21*measure_21 + size_00*measure_00 + size_02*measure_02 + size_11*measure_11 + size_20*measure_20 + size_22*measure_22)/(size_10 + size_21 + size_00 + size_02 + size_11 + size_20 + size_22)
         except:
-            measure_low = measure_10 + measure_21 + measure_00 + measure_02 + measure_11 + measure_20 + measure_22 #all sizes are 0, revert to basic measure
+            measure_low = np.mean([measure_10, measure_21, measure_00, measure_02, measure_11, measure_20, measure_22]) #all sizes are 0, revert to basic measure
 
         measure = measure_high - measure_low
 
