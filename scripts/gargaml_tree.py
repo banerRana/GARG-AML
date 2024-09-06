@@ -71,13 +71,7 @@ def evaluate_model(clf, X_test, y_test, plot=False):
 
     return AUC_ROC, AUC_PR
 
-def main():
-    dataset = "HI-Small"  
-    directed = False
-    score_type = "basic"
-    target = "SCATTER-GATHER"
-    cutoff = 0.2
-
+def data_preparation(dataset, directed, score_type, target, cutoff):
     gargaml_columns = [
         "GARGAML", 
         "GARGAML_min", "GARGAML_max", "GARGAML_mean", "GARGAML_std",
@@ -115,21 +109,55 @@ def main():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1997, stratify=y)
 
-    tree_clf = gargaml_tree(X_train, y_train)
+    return X_train, X_test, y_train, y_test
 
-    AUC_ROC, AUC_PR = evaluate_model(tree_clf, X_test, y_test)
+def main():
+    dataset = "HI-Small"  
+    directed = False
+    str_directed = "directed" if directed else "undirected"
+    score_type = "basic"
 
-    print("Tree")
-    print("AUC ROC: ", AUC_ROC)
-    print("AUC PR: ", AUC_PR)
+    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
 
-    boosting_clf = gargaml_boosting(X_train, y_train)
+    n = len(cut_offs)
+    m = len(columns)
 
-    AUC_ROC, AUC_PR = evaluate_model(boosting_clf, X_test, y_test)
+    AUC_ROC_tree_matrix = np.zeros((n, m))
+    AUC_ROC_boosting_matrix = np.zeros((n, m))
 
-    print("Boosting")
-    print("AUC ROC: ", AUC_ROC)
-    print("AUC PR: ", AUC_PR)
+    AUC_PR_tree_matrix = np.zeros((n, m))
+    AUC_PR_boosting_matrix = np.zeros((n, m))
+
+    for i in range(n):
+        cutoff = cut_offs[i]
+        for j in range(m):
+            target = columns[j]
+
+            X_train, X_test, y_train, y_test = data_preparation(dataset, directed, score_type, target, cutoff)
+
+            tree_clf = gargaml_tree(X_train, y_train)
+
+            AUC_ROC_tree, AUC_PR_tree = evaluate_model(tree_clf, X_test, y_test)
+
+            AUC_ROC_tree_matrix[i, j] = AUC_ROC_tree
+            AUC_PR_tree_matrix[i, j] = AUC_PR_tree
+
+            boosting_clf = gargaml_boosting(X_train, y_train)
+
+            AUC_ROC_boosting, AUC_PR_boosting = evaluate_model(boosting_clf, X_test, y_test)
+
+            AUC_ROC_boosting_matrix[i, j] = AUC_ROC_boosting
+            AUC_PR_boosting_matrix[i, j] = AUC_PR_boosting
+    
+    AUC_ROC_tree_df = pd.DataFrame(AUC_ROC_tree_matrix, columns=columns, index=cut_offs)
+    AUC_ROC_tree_df.to_csv("results/"+dataset+"AUC_ROC_tree"+str_directed+"_combined.csv")
+    AUC_ROC_boosting_df = pd.DataFrame(AUC_ROC_boosting_matrix, columns=columns, index=cut_offs)
+    AUC_ROC_boosting_df.to_csv("results/"+dataset+"AUC_ROC_boosting"+str_directed+"_combined.csv")
+    AUC_PR_tree_df = pd.DataFrame(AUC_PR_tree_matrix, columns=columns, index=cut_offs)
+    AUC_PR_tree_df.to_csv("results/"+dataset+"AUC_PR_tree"+str_directed+"_combined.csv")
+    AUC_PR_boosting_df = pd.DataFrame(AUC_PR_boosting_matrix, columns=columns, index=cut_offs)
+    AUC_PR_boosting_df.to_csv("results/"+dataset+"AUC_PR_boosting"+str_directed+"_combined.csv")
 
 if __name__ == "__main__":
     main()
