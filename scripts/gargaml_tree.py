@@ -71,14 +71,9 @@ def evaluate_model(clf, X_test, y_test, plot=False):
 
     return AUC_ROC, AUC_PR
 
-def data_preparation(dataset, directed, score_type, target, cutoff):
-    gargaml_columns = [
-        "GARGAML", 
-        "GARGAML_min", "GARGAML_max", "GARGAML_mean", "GARGAML_std",
-        "degree", "degree_min", "degree_max", "degree_mean", "degree_std"
-        ]
-
+def data_preparation(dataset, gargaml_columns, directed, score_type):
     str_directed = "directed" if directed else "undirected"
+
     results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv") #measures
 
     results_df = define_gargaml_scores(results_df_measures, directed, score_type=score_type) #summary scores
@@ -103,6 +98,9 @@ def data_preparation(dataset, directed, score_type, target, cutoff):
     for column in gargaml_columns:
         laundering_combined[column] = combined_patterns_GARGAML[column]
 
+    return laundering_combined
+
+def data_split(laundering_combined, gargaml_columns, target, cutoff):
     X = laundering_combined[gargaml_columns]
     rel_labels = laundering_combined[target]
     y = (rel_labels>cutoff)*1
@@ -117,8 +115,8 @@ def main():
     str_directed = "directed" if directed else "undirected"
     score_type = "basic"
 
-    cut_offs = [0.5] #[0.1, 0.2, 0.3, 0.5, 0.9]
-    columns = ["CYCLE"]#['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
+    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
 
     n = len(cut_offs)
     m = len(columns)
@@ -129,6 +127,14 @@ def main():
     AUC_PR_tree_matrix = np.zeros((n, m))
     AUC_PR_boosting_matrix = np.zeros((n, m))
 
+    gargaml_columns = [
+        "GARGAML", 
+        "GARGAML_min", "GARGAML_max", "GARGAML_mean", "GARGAML_std",
+        "degree", "degree_min", "degree_max", "degree_mean", "degree_std"
+        ]
+
+    laundering_combined = data_preparation(dataset, gargaml_columns, directed, score_type)
+
     for i in range(n):
         cutoff = cut_offs[i]
         for j in range(m):
@@ -137,7 +143,7 @@ def main():
             print(cutoff, target)
 
             try: # If too few labels, the model will not work. Performance matrix will be filled with NaNs
-                X_train, X_test, y_train, y_test = data_preparation(dataset, directed, score_type, target, cutoff)
+                X_train, X_test, y_train, y_test = data_split(laundering_combined, gargaml_columns, target, cutoff)
 
                 tree_clf = gargaml_tree(X_train, y_train)
 
