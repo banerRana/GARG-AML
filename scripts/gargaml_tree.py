@@ -117,8 +117,8 @@ def main():
     str_directed = "directed" if directed else "undirected"
     score_type = "basic"
 
-    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
-    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
+    cut_offs = [0.5] #[0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ["CYCLE"]#['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
 
     n = len(cut_offs)
     m = len(columns)
@@ -134,21 +134,31 @@ def main():
         for j in range(m):
             target = columns[j]
 
-            X_train, X_test, y_train, y_test = data_preparation(dataset, directed, score_type, target, cutoff)
+            print(cutoff, target)
 
-            tree_clf = gargaml_tree(X_train, y_train)
+            try: # If too few labels, the model will not work. Performance matrix will be filled with NaNs
+                X_train, X_test, y_train, y_test = data_preparation(dataset, directed, score_type, target, cutoff)
 
-            AUC_ROC_tree, AUC_PR_tree = evaluate_model(tree_clf, X_test, y_test)
+                tree_clf = gargaml_tree(X_train, y_train)
 
-            AUC_ROC_tree_matrix[i, j] = AUC_ROC_tree
-            AUC_PR_tree_matrix[i, j] = AUC_PR_tree
+                AUC_ROC_tree, AUC_PR_tree = evaluate_model(tree_clf, X_test, y_test)
 
-            boosting_clf = gargaml_boosting(X_train, y_train)
+                boosting_clf = gargaml_boosting(X_train, y_train)
 
-            AUC_ROC_boosting, AUC_PR_boosting = evaluate_model(boosting_clf, X_test, y_test)
+                AUC_ROC_boosting, AUC_PR_boosting = evaluate_model(boosting_clf, X_test, y_test)
 
-            AUC_ROC_boosting_matrix[i, j] = AUC_ROC_boosting
-            AUC_PR_boosting_matrix[i, j] = AUC_PR_boosting
+                AUC_ROC_tree_matrix[i, j] = AUC_ROC_tree
+                AUC_PR_tree_matrix[i, j] = AUC_PR_tree
+
+                AUC_ROC_boosting_matrix[i, j] = AUC_ROC_boosting
+                AUC_PR_boosting_matrix[i, j] = AUC_PR_boosting
+
+            except:
+                AUC_ROC_tree_matrix[i, j] = np.nan
+                AUC_PR_tree_matrix[i, j] = np.nan
+
+                AUC_ROC_boosting_matrix[i, j] = np.nan
+                AUC_PR_boosting_matrix[i, j] = np.nan
     
     AUC_ROC_tree_df = pd.DataFrame(AUC_ROC_tree_matrix, columns=columns, index=cut_offs)
     AUC_ROC_tree_df.to_csv("results/"+dataset+"AUC_ROC_tree"+str_directed+"_combined.csv")
