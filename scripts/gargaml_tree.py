@@ -24,21 +24,23 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 from pickle import dump
 
-def gargaml_tree(X, y):
+def gargaml_tree(X, y, save = False):
     clf = tree.DecisionTreeClassifier(min_samples_leaf=10)
     clf = clf.fit(X, y)
 
-    with open("results/model_tree.pkl", "wb") as f:
-        dump(clf, f, protocol=5)
+    if save:
+        with open("results/model_tree.pkl", "wb") as f:
+            dump(clf, f, protocol=5)
 
     return clf
 
-def gargaml_boosting(X, y):
+def gargaml_boosting(X, y, save = False):
     clf = ensemble.GradientBoostingClassifier(min_samples_leaf=10, random_state=1997)
     clf = clf.fit(X, y)
 
-    with open("results/model_boosting.pkl", "wb") as f:
-        dump(clf, f, protocol=5)
+    if save:
+        with open("results/model_boosting.pkl", "wb") as f:
+            dump(clf, f, protocol=5)
 
     return clf
 
@@ -101,11 +103,11 @@ def data_preparation(dataset, gargaml_columns, directed, score_type):
     return laundering_combined
 
 def data_split(laundering_combined, gargaml_columns, target, cutoff):
-    X = laundering_combined[gargaml_columns]
+    X_df = laundering_combined[gargaml_columns]
     rel_labels = laundering_combined[target]
     y = (rel_labels>cutoff)*1
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1997, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(X_df, y, test_size=0.2, random_state=1997, stratify=y)
 
     return X_train, X_test, y_train, y_test
 
@@ -133,6 +135,7 @@ def main():
         "degree", "degree_min", "degree_max", "degree_mean", "degree_std"
         ]
 
+    print("Data preparation")
     laundering_combined = data_preparation(dataset, gargaml_columns, directed, score_type)
 
     for i in range(n):
@@ -167,13 +170,13 @@ def main():
                 AUC_PR_boosting_matrix[i, j] = np.nan
     
     AUC_ROC_tree_df = pd.DataFrame(AUC_ROC_tree_matrix, columns=columns, index=cut_offs)
-    AUC_ROC_tree_df.to_csv("results/"+dataset+"AUC_ROC_tree"+str_directed+"_combined.csv")
+    AUC_ROC_tree_df.to_csv("results/"+dataset+"_AUC_ROC_tree_"+str_directed+"_combined.csv")
     AUC_ROC_boosting_df = pd.DataFrame(AUC_ROC_boosting_matrix, columns=columns, index=cut_offs)
-    AUC_ROC_boosting_df.to_csv("results/"+dataset+"AUC_ROC_boosting"+str_directed+"_combined.csv")
+    AUC_ROC_boosting_df.to_csv("results/"+dataset+"_AUC_ROC_boosting_"+str_directed+"_combined.csv")
     AUC_PR_tree_df = pd.DataFrame(AUC_PR_tree_matrix, columns=columns, index=cut_offs)
-    AUC_PR_tree_df.to_csv("results/"+dataset+"AUC_PR_tree"+str_directed+"_combined.csv")
+    AUC_PR_tree_df.to_csv("results/"+dataset+"_AUC_PR_tree_"+str_directed+"_combined.csv")
     AUC_PR_boosting_df = pd.DataFrame(AUC_PR_boosting_matrix, columns=columns, index=cut_offs)
-    AUC_PR_boosting_df.to_csv("results/"+dataset+"AUC_PR_boosting"+str_directed+"_combined.csv")
+    AUC_PR_boosting_df.to_csv("results/"+dataset+"_AUC_PR_boosting_"+str_directed+"_combined.csv")
 
 if __name__ == "__main__":
     main()
