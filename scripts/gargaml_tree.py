@@ -107,7 +107,7 @@ def data_split(laundering_combined, gargaml_columns, target, cutoff):
     rel_labels = laundering_combined[target]
     y = (rel_labels>cutoff)*1
 
-    X_train, X_test, y_train, y_test = train_test_split(X_df, y, test_size=0.2, random_state=1997, stratify=y)
+    X_train, X_test, y_train, y_test = train_test_split(X_df, y, test_size=0.3, random_state=1997, stratify=y)
 
     return X_train, X_test, y_train, y_test
 
@@ -129,6 +129,8 @@ def main():
     AUC_PR_tree_matrix = np.zeros((n, m))
     AUC_PR_boosting_matrix = np.zeros((n, m))
 
+    imbalance_matrix = np.zeros((n,m))
+
     gargaml_columns = [
         "GARGAML", 
         "GARGAML_min", "GARGAML_max", "GARGAML_mean", "GARGAML_std",
@@ -147,6 +149,8 @@ def main():
 
             try: # If too few labels, the model will not work. Performance matrix will be filled with NaNs
                 X_train, X_test, y_train, y_test = data_split(laundering_combined, gargaml_columns, target, cutoff)
+
+                imbalance_matrix[i, j] = sum(y_train)/len(y_train)
 
                 tree_clf = gargaml_tree(X_train, y_train)
 
@@ -177,6 +181,8 @@ def main():
     AUC_PR_tree_df.to_csv("results/"+dataset+"_AUC_PR_tree_"+str_directed+"_combined.csv")
     AUC_PR_boosting_df = pd.DataFrame(AUC_PR_boosting_matrix, columns=columns, index=cut_offs)
     AUC_PR_boosting_df.to_csv("results/"+dataset+"_AUC_PR_boosting_"+str_directed+"_combined.csv")
+    imbalance_df = pd.DataFrame(imbalance_matrix, columns=columns, index=cut_offs)
+    imbalance_df.to_csv("results/"+dataset+"_imbalance_"+str_directed+"_combined.csv")
 
 if __name__ == "__main__":
     main()
