@@ -58,4 +58,4 @@ if __name__ == '__main__':
     }
 
     df = pd.DataFrame(data_dict)
-    df.to_csv("results/"+dataset+"_GARGAML_undirected_test.csv", index=False)
+    df.to_csv("results/"+dataset+"_GARGAML_undirected.csv", index=False)
