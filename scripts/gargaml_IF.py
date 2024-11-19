@@ -10,6 +10,10 @@ import pandas as pd
 
 from sklearn.ensemble import IsolationForest
 
+DIR = "./"
+os.chdir(DIR)
+sys.path.append(DIR)
+
 from src.methods.utils.measure_functions_directed import *
 from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
@@ -115,5 +119,6 @@ def gargaml_IF(dataset = "HI-Small", directed = True):
 if __name__ == "__main__":
     dataset = "HI-Small"
     directed = True
+    str_directed = "directed" if directed else "undirected"
     measure_df = gargaml_IF(dataset = dataset, directed = directed)
-    measure_df.to_csv("results/"+dataset+"_GARGAML_"+directed+"_IF.csv", index = False)
+    measure_df.to_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv", index = False)
