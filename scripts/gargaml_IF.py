@@ -10,10 +10,6 @@ import pandas as pd
 
 from sklearn.ensemble import IsolationForest
 
-DIR = "../"
-os.chdir(DIR)
-sys.path.append(DIR)
-
 from src.methods.utils.measure_functions_directed import *
 from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
@@ -22,70 +18,89 @@ from src.methods.utils.neighbourhood_functions import GARG_AML_nodeselection
 def gargaml_IF(dataset = "HI-Small", directed = True):
     path = "data/"+dataset+"_Trans.csv"
 
-    G = construct_IBM_graph(path=path, directed = directed)
-    G_reduced = graph_community(G)
+    str_directed = "directed" if directed else "undirected"
+    result_path = "results/"+dataset+"_GARGAML_"+str_directed+".csv"
 
-    G_reduced_und = G_reduced.to_undirected()
-    G_reduced_rev = G_reduced.reverse(copy=True)
+    if os.path.exists(result_path):
+        measure_df = pd.read_csv(result_path)
+        measure_df = measure_df[[
+            "node", 
+            "measure_00", 
+            "measure_01", 
+            "measure_02", 
+            "measure_10", 
+            "measure_11", 
+            "measure_12", 
+            "measure_20", 
+            "measure_21",
+            "measure_22"
+            ]]
 
-    nodes = list(G_reduced.nodes)
-    measure_00_list = []
-    measure_01_list = []
-    measure_02_list = []
-    measure_10_list = []
-    measure_11_list = []
-    measure_12_list = []
-    measure_20_list = []
-    measure_21_list = []
-    measure_22_list = []
+    else: #If the results do not exist, calculate them
+        G = construct_IBM_graph(path=path, directed = directed)
+        G_reduced = graph_community(G)
 
-    for node in tqdm(nodes):
-        G_ego_second_und = nx.ego_graph(G_reduced_und, node, 2) #Use both incoming and outgoing edges
-        G_ego_second = nx.subgraph(G_reduced, G_ego_second_und.nodes)
-        G_ego_second_rev = nx.ego_graph(G_reduced_rev, node, 2) #Look at the reverse graph to get the incoming edges
+        G_reduced_und = G_reduced.to_undirected()
+        G_reduced_rev = G_reduced.reverse(copy=True)
 
-        nodes_0, nodes_1, nodes_2, nodes_ordered = GARG_AML_nodeselection(G_ego_second, node, directed = True, G_ego_second_und = G_ego_second_und, G_ego_second_rev = G_ego_second_rev)
+        nodes = list(G_reduced.nodes)
+        measure_00_list = []
+        measure_01_list = []
+        measure_02_list = []
+        measure_10_list = []
+        measure_11_list = []
+        measure_12_list = []
+        measure_20_list = []
+        measure_21_list = []
+        measure_22_list = []
 
-        adj_full = nx.adjacency_matrix(G_ego_second, nodelist=nodes_ordered).toarray()
+        for node in tqdm(nodes):
+            G_ego_second_und = nx.ego_graph(G_reduced_und, node, 2) #Use both incoming and outgoing edges
+            G_ego_second = nx.subgraph(G_reduced, G_ego_second_und.nodes)
+            G_ego_second_rev = nx.ego_graph(G_reduced_rev, node, 2) #Look at the reverse graph to get the incoming edges
 
-        size_0 = len(nodes_0)
-        size_1 = len(nodes_1)
-        size_2 = len(nodes_2)
+            nodes_0, nodes_1, nodes_2, nodes_ordered = GARG_AML_nodeselection(G_ego_second, node, directed = True, G_ego_second_und = G_ego_second_und, G_ego_second_rev = G_ego_second_rev)
 
-        measure_00 = measure_00_function(adj_full, size_0)
-        measure_01 = measure_01_function(adj_full, size_0, size_1)
-        measure_02 = measure_02_function(adj_full, size_0, size_1, size_2)
-        measure_10 = measure_10_function(adj_full, size_0, size_1)
-        measure_11 = measure_11_function(adj_full, size_0, size_1)
-        measure_12 = measure_12_function(adj_full, size_0, size_1, size_2)  
-        measure_20 = measure_20_function(adj_full, size_0, size_2)
-        measure_21 = measure_21_function(adj_full, size_0, size_1, size_2)
-        measure_22 = measure_22_function(adj_full, size_2)
+            adj_full = nx.adjacency_matrix(G_ego_second, nodelist=nodes_ordered).toarray()
 
-        measure_00_list.append(measure_00)
-        measure_01_list.append(measure_01)
-        measure_02_list.append(measure_02)
-        measure_10_list.append(measure_10)
-        measure_11_list.append(measure_11)
-        measure_12_list.append(measure_12)
-        measure_20_list.append(measure_20)
-        measure_21_list.append(measure_21)
-        measure_22_list.append(measure_22)
+            size_0 = len(nodes_0)
+            size_1 = len(nodes_1)
+            size_2 = len(nodes_2)
 
-    data_dict = {
-        "node": nodes, 
-        "measure_00": measure_00_list,
-        "measure_01": measure_01_list, 
-        "measure_02": measure_02_list,
-        "measure_10": measure_10_list,
-        "measure_11": measure_11_list,
-        "measure_12": measure_12_list,
-        "measure_20": measure_20_list,
-        "measure_21": measure_21_list,
-        "measure_22": measure_22_list,
-                }
+            measure_00 = measure_00_function(adj_full, size_0)
+            measure_01 = measure_01_function(adj_full, size_0, size_1)
+            measure_02 = measure_02_function(adj_full, size_0, size_1, size_2)
+            measure_10 = measure_10_function(adj_full, size_0, size_1)
+            measure_11 = measure_11_function(adj_full, size_0, size_1)
+            measure_12 = measure_12_function(adj_full, size_0, size_1, size_2)  
+            measure_20 = measure_20_function(adj_full, size_0, size_2)
+            measure_21 = measure_21_function(adj_full, size_0, size_1, size_2)
+            measure_22 = measure_22_function(adj_full, size_2)
 
-    measure_df = pd.DataFrame(data_dict)
+            measure_00_list.append(measure_00)
+            measure_01_list.append(measure_01)
+            measure_02_list.append(measure_02)
+            measure_10_list.append(measure_10)
+            measure_11_list.append(measure_11)
+            measure_12_list.append(measure_12)
+            measure_20_list.append(measure_20)
+            measure_21_list.append(measure_21)
+            measure_22_list.append(measure_22)
+
+        data_dict = {
+            "node": nodes, 
+            "measure_00": measure_00_list,
+            "measure_01": measure_01_list, 
+            "measure_02": measure_02_list,
+            "measure_10": measure_10_list,
+            "measure_11": measure_11_list,
+            "measure_12": measure_12_list,
+            "measure_20": measure_20_list,
+            "measure_21": measure_21_list,
+            "measure_22": measure_22_list,
+                    }
+
+        measure_df = pd.DataFrame(data_dict)
 
     X = measure_df.drop(columns = ["node"])
 
@@ -98,4 +113,7 @@ def gargaml_IF(dataset = "HI-Small", directed = True):
     return(measure_df)
 
 if __name__ == "__main__":
-    measure_df = gargaml_IF(dataset = "HI-Small", directed = True)
+    dataset = "HI-Small"
+    directed = True
+    measure_df = gargaml_IF(dataset = dataset, directed = directed)
+    measure_df.to_csv("results/"+dataset+"_GARGAML_"+directed+"_IF.csv", index = False)
