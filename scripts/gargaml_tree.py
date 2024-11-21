@@ -113,7 +113,7 @@ def data_split(laundering_combined, gargaml_columns, target, cutoff):
 
 def main():
     dataset = "HI-Small"  
-    directed = False
+    directed = True
     str_directed = "directed" if directed else "undirected"
     score_type = "basic"
 

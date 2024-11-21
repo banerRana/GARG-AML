@@ -41,12 +41,23 @@ def lift_curve_values(y_val, y_pred, steps):
 
 dataset = "HI-Small"  
 directed = True
-score_type = "basic" # basic or weighted_average
+supervised = False
+score_type = "weighted_average" # basic or weighted_average
 
 str_directed = "directed" if directed else "undirected"
-results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
+str_supervised = "supervised" if supervised else "unsupervised"
 
-results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
+if supervised:
+    results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
+
+    results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
+else:
+    results_df = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
+    results_df = results_df.set_index("node")
+    results_df = results_df[["anomaly_score"]]
+    results_df["anomaly_score"] = results_df["anomaly_score"]*(-1)
+    results_df.columns = ["GARGAML"]
+
 
 transactions_df_extended, pattern_columns = define_ML_labels(
     path_trans = "data/"+dataset+"_Trans.csv",
@@ -123,9 +134,12 @@ for axis, col in zip(axes[0], columns):
 for axis, row in zip(axes[:,0], cut_offs):
     axis.set_ylabel(row, size='large')
 
-fig.suptitle('Distribution of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+if supervised:
+    fig.suptitle('Distribution of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+else:
+    fig.suptitle('Distribution of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
 fig.tight_layout()
-plt.savefig("results/"+dataset+"_GARGAML_"+str_directed+"_combined_histogram.pdf")
+plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_histogram.pdf")
 plt.close()
 
 print("="*10)
@@ -158,9 +172,13 @@ for axis, col in zip(axes[0], columns):
 for axis, row in zip(axes[:,0], cut_offs):
     axis.set_ylabel(row, size='large')
 
-fig.suptitle('Lift curve of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+if supervised:
+    fig.suptitle('Lift curve of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+else:
+    fig.suptitle('Lift curve of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
+
 fig.tight_layout()
-plt.savefig("results/"+dataset+"_GARGAML_"+str_directed+"_combined_lift.pdf")
+plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_lift.pdf")
 plt.close()
 
 print("="*10)
