@@ -29,6 +29,9 @@ The experiments are evaluated on synthetic data which is made publically availab
 The repository does not provide any data, due to size constraints. The data can be found online using the following link:
 - [IBM Transactions for Anti Money Laundering (AML)](https://www.kaggle.com/datasets/ealtman2019/ibm-transactions-for-anti-money-laundering-aml)
 
+## Experimental Evaluation
+GARG-AML is tested against the current state-of-the-art, namely Flowscope [[1]] and AutoAudit [[2]]. The code of these two models is taken from the respective repositories and not included in this one. We refer the interested coder to the corresponding forked repositories for [Flowscope](https://github.com/B-Deprez/flowscope) and [AutoAudit](https://github.com/B-Deprez/AutoAudit), which include changes made to analyse the data sets included in this study. The code for analysing the output of the SOTA on the other hand is provided. 
+
 ## Repository structure
 TBD when code is finished
 
@@ -52,3 +55,8 @@ Please cite our paper and/or code as follows:
 }
 
 ```
+
+## References
+[[1]] Li, X., Liu, S., Li, Z., Han, X., Shi, C., Hooi, B., ... & Cheng, X. (2020). Flowscope: Spotting money laundering based on graphs. In Proceedings of the AAAI conference on artificial intelligence (Vol. 34, No. 04, pp. 4731-4738).
+
+[[2]] Lee, M. C., Zhao, Y., Wang, A., Liang, P. J., Akoglu, L., Tseng, V. S., & Faloutsos, C. (2020). Autoaudit: Mining accounting and time-evolving graphs. In 2020 IEEE International Conference on Big Data (Big Data) (pp. 950-956). IEEE.
