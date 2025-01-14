@@ -91,26 +91,22 @@ def calculate_score_undirected(line, score_type="basic"):
     measure_3 = line["measure_3"]
     
     if score_type == "basic":
-        measure = measure_2 - (measure_1 + measure_3)/2
+        measure = measure_2 - (measure_1 + measure_3) / 2
     
     elif score_type == "weighted_average":
         size_1 = line["size_1"]
         size_3 = line["size_3"]
-        try:
-            measure = measure_2 - (size_1*measure_1 + size_3*measure_3)/(size_1 + size_3)
-        except:
-            measure = measure_2 #both sizes are 0, so only measure_2 is relevant
+        total_size = size_1 + size_3
+        if total_size > 0:
+            measure = measure_2 - (size_1 * measure_1 + size_3 * measure_3) / total_size
+        else:
+            measure = measure_2  # both sizes are 0, so only measure_2 is relevant
 
     return measure
 
 def define_gargaml_scores_undirected(results_df_measures, score_type="basic"):
-    nodes = []
-    gargaml = []
-
-    for i,line in results_df_measures.iterrows():
-        measure = calculate_score_undirected(line, score_type=score_type)
-        nodes.append(line["node"])
-        gargaml.append(measure)
+    nodes = results_df_measures["node"].tolist()
+    gargaml = [calculate_score_undirected(line, score_type=score_type) for _, line in results_df_measures.iterrows()]
 
     dict_gargaml = {
         "node": nodes,
