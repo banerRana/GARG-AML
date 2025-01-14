@@ -123,7 +123,7 @@ for i in range(n):
         divergence_matrix[i, j] = divergence
 
 divergence_df = pd.DataFrame(divergence_matrix, columns=columns, index=cut_offs)
-divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_directed+"_combined_divergence.csv")
+divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_divergence.csv")
 
 print("="*10)
 print("Divergence saved")
