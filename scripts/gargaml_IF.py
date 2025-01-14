@@ -7,8 +7,10 @@ from tqdm import tqdm
 
 import networkx as nx
 import pandas as pd
+import numpy as np
 
 from sklearn.ensemble import IsolationForest
+from sklearn.metrics import roc_auc_score, average_precision_score
 
 DIR = "./"
 os.chdir(DIR)
@@ -18,6 +20,8 @@ from src.methods.utils.measure_functions_directed import *
 from src.data.graph_construction import construct_IBM_graph
 from src.utils.graph_processing import graph_community
 from src.methods.utils.neighbourhood_functions import GARG_AML_nodeselection
+
+from src.data.pattern_construction import define_ML_labels, summarise_ML_labels
 
 def gargaml_IF(dataset = "HI-Small", directed = True):
     path = "data/"+dataset+"_Trans.csv"
@@ -116,9 +120,64 @@ def gargaml_IF(dataset = "HI-Small", directed = True):
 
     return(measure_df)
 
+def data_preparation(dataset, measure_df):
+    anomaly_scores = measure_df.set_index("node")
+    anomaly_scores = anomaly_scores[["anomaly_score"]]
+    anomaly_scores['anomaly_score'] = -anomaly_scores['anomaly_score']
+
+    transactions_df_extended, pattern_columns = define_ML_labels( #patterns
+        path_trans = "data/"+dataset+"_Trans.csv",
+        path_patterns = "data/"+dataset+"_Patterns.txt"
+    )
+
+    laundering_combined, _, _ = summarise_ML_labels(transactions_df_extended,pattern_columns)
+    laundering_combined.drop(columns = ["Not Classified"], inplace = True)
+    
+    laundering_combined = laundering_combined.merge(anomaly_scores, left_index = True, right_index = True)
+    
+    return laundering_combined
+
+def IF_AUC(dataset, measure_df):
+    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
+
+    n = len(cut_offs)
+    m = len(columns)
+
+    AUC_ROC_matrix = np.zeros((n, m))
+    AUC_PR_matrix = np.zeros((n, m))
+
+    laundering_combined = data_preparation(dataset, measure_df)
+
+    for i in range(n):
+        cutoff = cut_offs[i]
+        for j in range(m):
+            target = columns[j]
+
+            print(cutoff, target)
+
+            rel_labels = laundering_combined[target]
+            
+            try:
+                y_pred = laundering_combined['anomaly_score']
+                y_test = (rel_labels>cutoff)*1
+
+                AUC_ROC = roc_auc_score(y_test, y_pred)
+                AUC_PR = average_precision_score(y_test, y_pred)
+
+                AUC_ROC_matrix[i,j] = AUC_ROC
+                AUC_PR_matrix[i,j] = AUC_PR
+            except:
+                AUC_ROC_matrix[i,j] = np.nan
+                AUC_PR_matrix[i,j] = np.nan
+    pass
+
 if __name__ == "__main__":
     dataset = "HI-Small"
     directed = True
+    need_to_save = True
     str_directed = "directed" if directed else "undirected"
     measure_df = gargaml_IF(dataset = dataset, directed = directed)
-    measure_df.to_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv", index = False)
+    if need_to_save:
+        measure_df.to_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv", index = False)
+    IF_AUC(dataset, measure_df)
