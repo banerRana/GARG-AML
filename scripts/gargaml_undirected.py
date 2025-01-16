@@ -12,15 +12,21 @@ from multiprocessing import Pool, cpu_count
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from src.data.graph_construction import construct_IBM_graph
+from src.data.graph_construction import construct_IBM_graph, construct_synthetic_graph
 from src.utils.graph_processing import graph_community
 from src.methods.GARGAML import GARG_AML_node_undirected_measures
 
-dataset = "HI-Small"
-path = "data/"+dataset+"_Trans.csv"
+dataset = "synthetic"
 directed = False
+if dataset in ["HI-Small", "LI-Large"]:
+    path = "data/"+dataset+"_Trans.csv"
+    G = construct_IBM_graph(path=path, directed = directed)
+elif dataset == "synthetic":
+    path = "data/edge_data_synthetic.csv"
+    G = construct_synthetic_graph(path=path, directed = directed)
+else:
+    raise ValueError("Invalid dataset")
 
-G = construct_IBM_graph(path=path, directed = directed)
 G_reduced = graph_community(G)
 
 # Define a function to process each node

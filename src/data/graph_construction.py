@@ -20,3 +20,23 @@ def construct_IBM_graph(path="data/HI-Small_Trans.csv", directed=False):
     G.remove_edges_from([(n, n) for n in G.nodes() if G.has_edge(n, n)])
 
     return G
+
+def construct_synthetic_graph(path="data/edge_data_synthetic.csv", directed=False):
+    """
+    Construct a graph from the synthetic data.
+    """
+    # Load the data
+    data = pd.read_csv(path)
+    
+    # Create the graph
+    if directed:
+        G = nx.DiGraph()
+    else:
+        G = nx.Graph()
+    
+    edges = zip(data["source"], data["target"])
+
+    G.add_edges_from(edges)
+    G.remove_edges_from([(n, n) for n in G.nodes() if G.has_edge(n, n)])
+
+    return G
