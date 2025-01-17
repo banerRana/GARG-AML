@@ -39,147 +39,159 @@ def lift_curve_values(y_val, y_pred, steps):
 
     return(vals_lift)
 
-dataset = "HI-Small"  
-directed = True
-supervised = False
-score_type = "weighted_average" # basic or weighted_average
+def distribution_scores_IBM(dataset, str_directed, str_supervised):
+    transactions_df_extended, pattern_columns = define_ML_labels(
+        path_trans = "data/"+dataset+"_Trans.csv",
+        path_patterns = "data/"+dataset+"_Patterns.txt"
+    )
 
-str_directed = "directed" if directed else "undirected"
-str_supervised = "supervised" if supervised else "unsupervised"
+    laundering_combined, _, _ = summarise_ML_labels(transactions_df_extended,pattern_columns)
 
-if supervised:
-    results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
+    from_data = transactions_df_extended[["Account", "From Bank"]].drop_duplicates()
+    from_data.columns = ["Account", "Bank"]
+    to_data = transactions_df_extended[["Account.1", "To Bank"]].drop_duplicates()
+    to_data.columns = ["Account", "Bank"]
+    total_data = pd.concat([from_data, to_data], axis=0).drop_duplicates()
 
-    results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
-else:
-    results_df = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
-    results_df = results_df.set_index("node")
-    results_df = results_df[["anomaly_score"]]
-    results_df["anomaly_score"] = results_df["anomaly_score"]*(-1)
-    results_df.columns = ["GARGAML"]
+    print("="*10)
+    print("Data loaded")
 
+    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
 
-transactions_df_extended, pattern_columns = define_ML_labels(
-    path_trans = "data/"+dataset+"_Trans.csv",
-    path_patterns = "data/"+dataset+"_Patterns.txt"
-)
+    n = len(cut_offs)
+    m = len(columns)
 
-laundering_combined, _, _ = summarise_ML_labels(transactions_df_extended,pattern_columns)
+    divergence_matrix = np.zeros((n, m))
 
-from_data = transactions_df_extended[["Account", "From Bank"]].drop_duplicates()
-from_data.columns = ["Account", "Bank"]
-to_data = transactions_df_extended[["Account.1", "To Bank"]].drop_duplicates()
-to_data.columns = ["Account", "Bank"]
-total_data = pd.concat([from_data, to_data], axis=0).drop_duplicates()
+    fig, axes = plt.subplots(n, m, figsize = (n*5, m))
 
-print("="*10)
-print("Data loaded")
+    for i in range(n):
+        cut_off = cut_offs[i]
+        for j in range(m):
+            column = columns[j]
+            print(cut_off, column)
+            laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
 
-cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
-columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
+            labels = []
+            for node in results_df.index:
+                label = int(laundering_combined.loc[node]["Label"])
+                labels.append(label)
 
-n = len(cut_offs)
-m = len(columns)
+            results_df["Label"] = labels
+        
+            # Filter the DataFrame by label
+            label_0 = results_df[results_df["Label"] == 0]["GARGAML"]
+            label_1 = results_df[results_df["Label"] == 1]["GARGAML"]
 
-divergence_matrix = np.zeros((n, m))
+            # Calculate the bin edges
+            all_data = np.concatenate([label_0, label_1])
+            bins = np.histogram_bin_edges(all_data, bins=20)
 
-fig, axes = plt.subplots(n, m, figsize = (n*5, m))
+            # Plot histogram for label 0
+            axes[i, j].hist(label_0, bins=bins, alpha=0.5, label='Label 0', density=True)
 
-for i in range(n):
-    cut_off = cut_offs[i]
-    for j in range(m):
-        column = columns[j]
-        print(cut_off, column)
-        laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
+            # Plot histogram for label 1
+            axes[i, j].hist(label_1, bins=bins, alpha=0.5, label='Label 1', density=True)
 
-        labels = []
-        for node in results_df.index:
-            label = int(laundering_combined.loc[node]["Label"])
-            labels.append(label)
+            # Add labels and title
+            #axes[i, j].set_xlabel('GARGAML')
+            #axes[i, j].set_ylabel('Relative Frequency')
+            #axes[i, j].set_title('Label: "'+ column +'" at '+ str(cut_off))
+            #axes[i, j].legend()
 
-        results_df["Label"] = labels
-    
-        # Filter the DataFrame by label
-        label_0 = results_df[results_df["Label"] == 0]["GARGAML"]
-        label_1 = results_df[results_df["Label"] == 1]["GARGAML"]
+            divergence = divergence_metric(label_0, label_1)
+            divergence_matrix[i, j] = divergence
 
-        # Calculate the bin edges
-        all_data = np.concatenate([label_0, label_1])
-        bins = np.histogram_bin_edges(all_data, bins=20)
+    divergence_df = pd.DataFrame(divergence_matrix, columns=columns, index=cut_offs)
+    divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_divergence.csv")
 
-        # Plot histogram for label 0
-        axes[i, j].hist(label_0, bins=bins, alpha=0.5, label='Label 0', density=True)
+    print("="*10)
+    print("Divergence saved")
 
-        # Plot histogram for label 1
-        axes[i, j].hist(label_1, bins=bins, alpha=0.5, label='Label 1', density=True)
+    for axis, col in zip(axes[0], columns):
+        axis.set_title(col)
 
-        # Add labels and title
-        #axes[i, j].set_xlabel('GARGAML')
-        #axes[i, j].set_ylabel('Relative Frequency')
-        #axes[i, j].set_title('Label: "'+ column +'" at '+ str(cut_off))
-        #axes[i, j].legend()
+    for axis, row in zip(axes[:,0], cut_offs):
+        axis.set_ylabel(row, size='large')
 
-        divergence = divergence_metric(label_0, label_1)
-        divergence_matrix[i, j] = divergence
+    if supervised:
+        fig.suptitle('Distribution of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+    else:
+        fig.suptitle('Distribution of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
+    fig.tight_layout()
+    plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_histogram.pdf")
+    plt.close()
 
-divergence_df = pd.DataFrame(divergence_matrix, columns=columns, index=cut_offs)
-divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_divergence.csv")
+    print("="*10)
+    print("Figure distributions saved")
 
-print("="*10)
-print("Divergence saved")
+    fig, axes = plt.subplots(n, m, figsize = (n*5, m))
+    values = np.linspace(0.01, 1, 100)
 
-for axis, col in zip(axes[0], columns):
-    axis.set_title(col)
+    for i in range(n):
+        cut_off = cut_offs[i]
+        for j in range(m):
+            column = columns[j]
+            print(cut_off, column)
+            laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
 
-for axis, row in zip(axes[:,0], cut_offs):
-    axis.set_ylabel(row, size='large')
+            labels = []
+            for node in results_df.index:
+                label = int(laundering_combined.loc[node]["Label"])
+                labels.append(label)
 
-if supervised:
-    fig.suptitle('Distribution of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
-else:
-    fig.suptitle('Distribution of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
-fig.tight_layout()
-plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_histogram.pdf")
-plt.close()
+            results_df["Label"] = labels
+        
+            lift = lift_curve_values(results_df["Label"], results_df["GARGAML"], values)
 
-print("="*10)
-print("Figure distributions saved")
+            axes[i, j].plot(values, lift)
 
-fig, axes = plt.subplots(n, m, figsize = (n*5, m))
-values = np.linspace(0.01, 1, 100)
+    for axis, col in zip(axes[0], columns):
+        axis.set_title(col)
 
-for i in range(n):
-    cut_off = cut_offs[i]
-    for j in range(m):
-        column = columns[j]
-        print(cut_off, column)
-        laundering_combined["Label"] = ((laundering_combined[column]>cut_off)*1).values
+    for axis, row in zip(axes[:,0], cut_offs):
+        axis.set_ylabel(row, size='large')
 
-        labels = []
-        for node in results_df.index:
-            label = int(laundering_combined.loc[node]["Label"])
-            labels.append(label)
+    if supervised:
+        fig.suptitle('Lift curve of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
+    else:
+        fig.suptitle('Lift curve of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
 
-        results_df["Label"] = labels
-    
-        lift = lift_curve_values(results_df["Label"], results_df["GARGAML"], values)
+    fig.tight_layout()
+    plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_lift.pdf")
+    plt.close()
 
-        axes[i, j].plot(values, lift)
+    print("="*10)
+    print("Figure lift saved")
 
-for axis, col in zip(axes[0], columns):
-    axis.set_title(col)
+def distribution_scores_synthetic(dataset, str_directed, str_supervised):
+    pass
 
-for axis, row in zip(axes[:,0], cut_offs):
-    axis.set_ylabel(row, size='large')
+if __name__ == "__main__":
+    dataset = "synthetic"  
+    directed = True
+    supervised = True
+    score_type = "weighted_average" # basic or weighted_average
+    str_directed = "directed" if directed else "undirected"
+    str_supervised = "supervised" if supervised else "unsupervised"
 
-if supervised:
-    fig.suptitle('Lift curve of '+ str_directed +' GARGAML Scores by Label for data set: '+ dataset)
-else:
-    fig.suptitle('Lift curve of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
+    if supervised:
+        results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
+        results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
 
-fig.tight_layout()
-plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_lift.pdf")
-plt.close()
+    else:
+        results_df = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
+        results_df = results_df.set_index("node")
+        results_df = results_df[["anomaly_score"]]
+        results_df["anomaly_score"] = results_df["anomaly_score"]*(-1)
+        results_df.columns = ["GARGAML"]
 
-print("="*10)
-print("Figure lift saved")
+    if dataset in ["HI-Small", "LI-Large"]:
+        distribution_scores_IBM(dataset, str_directed, str_supervised)
+
+    elif dataset == "synthetic":
+        distribution_scores_synthetic(dataset, str_directed, str_supervised)
+
+    else:
+        raise ValueError("Invalid dataset")
