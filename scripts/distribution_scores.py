@@ -39,7 +39,7 @@ def lift_curve_values(y_val, y_pred, steps):
 
     return(vals_lift)
 
-def distribution_scores_IBM(dataset, str_directed, str_supervised):
+def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",
         path_patterns = "data/"+dataset+"_Patterns.txt"
@@ -93,12 +93,6 @@ def distribution_scores_IBM(dataset, str_directed, str_supervised):
 
             # Plot histogram for label 1
             axes[i, j].hist(label_1, bins=bins, alpha=0.5, label='Label 1', density=True)
-
-            # Add labels and title
-            #axes[i, j].set_xlabel('GARGAML')
-            #axes[i, j].set_ylabel('Relative Frequency')
-            #axes[i, j].set_title('Label: "'+ column +'" at '+ str(cut_off))
-            #axes[i, j].legend()
 
             divergence = divergence_metric(label_0, label_1)
             divergence_matrix[i, j] = divergence
@@ -165,12 +159,43 @@ def distribution_scores_IBM(dataset, str_directed, str_supervised):
     print("="*10)
     print("Figure lift saved")
 
-def distribution_scores_synthetic(dataset, str_directed, str_supervised):
-    pass
+def distribution_scores_synthetic(results_df, str_directed, str_supervised):
+    columns = ['laundering', 'separate', 'new_mules', 'existing_mules']
+    label_data = pd.read_csv("data/label_data_synthetic.csv")
+    laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="inner")
+
+    n = len(columns)
+
+    fig, axes = plt.subplots(n, 1, figsize = (6, 2*n))
+
+    for i in range(n):
+        column = columns[i]
+        laundering_combined["Label"] = laundering_combined[column].values
+
+        # Filter the DataFrame by label
+        label_0 = laundering_combined[laundering_combined["Label"] == 0]["GARGAML"]
+        label_1 = laundering_combined[laundering_combined["Label"] == 1]["GARGAML"]
+
+        # Calculate the bin edges
+        all_data = np.concatenate([label_0, label_1])
+        bins = np.histogram_bin_edges(all_data, bins=20)
+
+        # Plot histogram for label 0
+        axes[i].hist(label_0, bins=bins, alpha=0.5, label='Label 0', density=True)
+
+        # Plot histogram for label 1
+        axes[i].hist(label_1, bins=bins, alpha=0.5, label='Label 1', density=True)
+
+        # Add labels and title
+        axes[i].set_xlabel('GARG-AML score')
+        axes[i].set_ylabel('Relative Frequency')
+        axes[i].set_title(column)
+    fig.tight_layout()
+    plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_histogram.pdf")
 
 if __name__ == "__main__":
     dataset = "synthetic"  
-    directed = True
+    directed = False
     supervised = True
     score_type = "weighted_average" # basic or weighted_average
     str_directed = "directed" if directed else "undirected"
@@ -188,10 +213,10 @@ if __name__ == "__main__":
         results_df.columns = ["GARGAML"]
 
     if dataset in ["HI-Small", "LI-Large"]:
-        distribution_scores_IBM(dataset, str_directed, str_supervised)
+        distribution_scores_IBM(dataset, results_df, str_directed, str_supervised)
 
     elif dataset == "synthetic":
-        distribution_scores_synthetic(dataset, str_directed, str_supervised)
+        distribution_scores_synthetic(results_df, str_directed, str_supervised)
 
     else:
         raise ValueError("Invalid dataset")
