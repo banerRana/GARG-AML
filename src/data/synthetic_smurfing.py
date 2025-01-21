@@ -29,7 +29,7 @@ def add_smurfing_patterns_separate(graph, n, num_smurfs):
     
     return graph
 
-def add_smurfing_patterns_new_mules(graph, n, num_smurfs):
+def add_smurfing_patterns_new_mules(graph, n, num_smurfs, list_nodes):
     for i in range(n):
         # Add smurfing pattern to the graph
 
@@ -61,10 +61,10 @@ def add_smurfing_patterns_new_mules(graph, n, num_smurfs):
             graph.add_edge(num_nodes+k, target_node) # Connect the money mules to the target
             graph.es[graph.get_eid(num_nodes+k, target_node)]['laundering'] = True
     
-    return graph
+    return graph, list_nodes
 
 
-def add_smurfing_patterns_existing_mules(graph, n, num_smurfs):
+def add_smurfing_patterns_existing_mules(graph, n, num_smurfs, list_nodes):
     for i in range(n):
         # Add smurfing pattern to the graph
 
@@ -91,9 +91,9 @@ def add_smurfing_patterns_existing_mules(graph, n, num_smurfs):
             graph.add_edge(node, target_node)
             graph.es[graph.get_eid(node, target_node)]['laundering'] = True
 
-    return graph
+    return graph, list_nodes
 
-def add_smurfing_patterns(graph, n, num_smurfs=[] ,type_pattern=''):
+def add_smurfing_patterns(graph, n, list_nodes, num_smurfs=[] ,type_pattern=''):
     """
     Add smurfing patterns to the original graph
     :param graph: igraph.Graph object
@@ -112,30 +112,43 @@ def add_smurfing_patterns(graph, n, num_smurfs=[] ,type_pattern=''):
     if type_pattern == 'separate':
         graph_smurfing = add_smurfing_patterns_separate(graph, n, num_smurfs)
     elif type_pattern == 'new_mules':
-        graph_smurfing = add_smurfing_patterns_new_mules(graph, n, num_smurfs)
+        graph_smurfing, list_nodes = add_smurfing_patterns_new_mules(graph, n, num_smurfs, list_nodes)
     elif type_pattern == 'existing_mules':
-        graph_smurfing = add_smurfing_patterns_existing_mules(graph, n, num_smurfs)
+        graph_smurfing, list_nodes = add_smurfing_patterns_existing_mules(graph, n, num_smurfs, list_nodes)
     else:
         raise ValueError('Invalid type of smurfing pattern')
     
-    return graph_smurfing
+    return graph_smurfing, list_nodes
 
-if __name__ == '__main__':
-    # Create synthetic Barabasi-Albert graph
-    graph = ig.Graph()
-    ba = graph.Barabasi(200, m=1)
+def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns):
+    string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
 
-    list_nodes = ba.vs.indices
+    if generation_method == 'Barabasi-Albert':
+        # Create synthetic Barabasi-Albert graph
+        graph = ig.Graph()
+        rg = graph.Barabasi(n_nodes, m=m_edges)
+    elif generation_method == 'Erdos-Renyi':
+        # Create synthetic Erdos-Renyi graph
+        graph = ig.Graph()
+        rg = graph.Erdos_Renyi(n_nodes, p=p_edges)
+    elif generation_method == 'Watts-Strogatz':
+        # Create synthetic Watts-Strogatz graph
+        graph = ig.Graph()
+        rg = graph.Watts_Strogatz(1, n_nodes, m_edges, p_edges)
+    else:
+        raise ValueError('Invalid generation method')
+
+    list_nodes = rg.vs.indices
     random.shuffle(list_nodes)
 
-    ba.vs['new_node'] = False 
-    ba.vs['laundering'] = False
+    rg.vs['new_node'] = False 
+    rg.vs['laundering'] = False
 
-    ba.vs['separate'] = False
-    ba.vs['new_mules'] = False
-    ba.vs['existing_mules'] = False
+    rg.vs['separate'] = False
+    rg.vs['new_mules'] = False
+    rg.vs['existing_mules'] = False
 
-    ba.es['laundering'] = False
+    rg.es['laundering'] = False
 
     ## Add smurfing patterns
     # We implement three types of smurfing patterns: separate, new_mules, existing_mules
@@ -143,9 +156,10 @@ if __name__ == '__main__':
     # new_mules: Smurfing patterns are constructed using new mules (which only make transactions as money mules)
     # existing_mules: Smurfing patterns are constructed using existing mules (which have made normal transactions in the past)
     # All three patterns are added to study robustness to masking
-    graph_smurfing = add_smurfing_patterns(ba, 3, type_pattern='separate')
-    graph_smurfing = add_smurfing_patterns(ba, 3, type_pattern='new_mules')
-    graph_smurfing = add_smurfing_patterns(ba, 3, type_pattern='existing_mules')
+    # The node list is updated, since each node can only be used once in a smurfing pattern
+    graph_smurfing, list_nodes = add_smurfing_patterns(rg, n_patterns, list_nodes, type_pattern='separate')
+    graph_smurfing, list_nodes = add_smurfing_patterns(rg, n_patterns, list_nodes, type_pattern='new_mules')
+    graph_smurfing, list_nodes = add_smurfing_patterns(rg, n_patterns, list_nodes, type_pattern='existing_mules')
     graph_smurfing.simplify(combine_edges='max')
 
     graph_smurfing.vs['color'] = ['red' if x['new_node'] else 'blue' for x in graph_smurfing.vs]
@@ -157,7 +171,7 @@ if __name__ == '__main__':
     visual_style["vertex_color"] = graph_smurfing.vs['color']
     visual_style["edge_color"] = graph_smurfing.es['color']
     visual_style["edge_width"] = 1
-    ig.plot(graph_smurfing, **visual_style, target="data/visualisation_network.pdf")
+    ig.plot(graph_smurfing, **visual_style, target='data/visualisation_network_'+string_name+'.pdf')
 
     # Extract nodes into a pandas dataframe
     nodes_data = {attr: graph_smurfing.vs[attr] for attr in graph_smurfing.vs.attributes()}
@@ -177,7 +191,39 @@ if __name__ == '__main__':
 
     print('Number of nodes:', graph_smurfing.vcount())
     print('Number of edges:', graph_smurfing.ecount())
+    n_labels = nodes_df['laundering'].sum()
+    print('Number of labelled nodes:', n_labels)
 
     # Save the dataframe to a CSV file
-    nodes_df.to_csv('data/label_data_synthetic.csv', index=False)
-    edges_df.to_csv('data/edge_data_synthetic.csv', index=False)
+    nodes_df.to_csv('data/label_data_'+string_name+'.csv', index=False)
+    edges_df.to_csv('data/edge_data_'+string_name+'.csv', index=False)
+
+
+if __name__ == '__main__':
+    n_nodes_list = [100, 1000, 10000, 100000] # Number of nodes in the graph
+    m_edges_list = [1, 2, 5] # Number of edges to attach from a new node to existing nodes
+    p_edges_list = [0.1, 0.2, 0.5] # Probability of adding an edge between two nodes
+    generation_method_list = [
+        'Barabasi-Albert', 
+        'Erdos-Renyi', 
+        'Watts-Strogatz'
+        ] # Generation method for the graph
+    n_patterns_list = [3, 5, 10, 50] # Number of smurfing patterns to add
+
+    for n_nodes in n_nodes_list:
+        for generation_method in generation_method_list:
+            if generation_method == 'Barabasi-Albert':
+                for m_edges in m_edges_list:
+                    for n_patterns in n_patterns_list:
+                        # No p_edges for Barabasi-Albert
+                        create_synthetic_data(n_nodes, m_edges, 0, generation_method, n_patterns)
+            elif generation_method == 'Erdos-Renyi':
+                for p_edges in p_edges_list:
+                    for n_patterns in n_patterns_list:
+                        # No m_edges for Erdos-Renyi
+                        create_synthetic_data(n_nodes, 0, p_edges, generation_method, n_patterns)
+            elif generation_method == 'Watts-Strogatz':
+                for m_edges in m_edges_list:
+                    for p_edges in p_edges_list:
+                        for n_patterns in n_patterns_list:
+                            create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns)
