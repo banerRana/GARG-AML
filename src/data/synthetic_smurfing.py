@@ -3,6 +3,10 @@ import igraph as ig
 import matplotlib.pyplot as plt
 import random
 
+# No warnings
+import warnings
+warnings.filterwarnings('ignore')
+
 def add_smurfing_patterns_separate(graph, n, num_smurfs):
     for i in range(n):
         # Add smurfing pattern to the graph
@@ -123,6 +127,14 @@ def add_smurfing_patterns(graph, n, list_nodes, num_smurfs=[] ,type_pattern=''):
 def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns):
     string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
 
+    print("=====================================")
+    print('Creating synthetic data for:', string_name)
+    print('Number of nodes:', n_nodes)
+    print('Number of edges:', m_edges)
+    print('Probability of edges:', p_edges)
+    print('Number of smurfing patterns:', n_patterns)
+    print("=====================================")
+
     if generation_method == 'Barabasi-Albert':
         # Create synthetic Barabasi-Albert graph
         graph = ig.Graph()
@@ -130,7 +142,7 @@ def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patter
     elif generation_method == 'Erdos-Renyi':
         # Create synthetic Erdos-Renyi graph
         graph = ig.Graph()
-        rg = graph.Erdos_Renyi(n_nodes, p=p_edges)
+        rg = graph.Erdos_Renyi(n_nodes, p=p_edges/10) # Keep number of edges smaller
     elif generation_method == 'Watts-Strogatz':
         # Create synthetic Watts-Strogatz graph
         graph = ig.Graph()
@@ -162,16 +174,18 @@ def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patter
     graph_smurfing, list_nodes = add_smurfing_patterns(rg, n_patterns, list_nodes, type_pattern='existing_mules')
     graph_smurfing.simplify(combine_edges='max')
 
-    graph_smurfing.vs['color'] = ['red' if x['new_node'] else 'blue' for x in graph_smurfing.vs]
-    graph_smurfing.vs['size'] = [10 if x['laundering'] else 5 for x in graph_smurfing.vs]
-    graph_smurfing.es['color'] = ['black' if x['laundering'] else 'gray' for x in graph_smurfing.es]
+    # Visualise the graph
+    if graph_smurfing.vcount() < 1000:
+        graph_smurfing.vs['color'] = ['red' if x['new_node'] else 'blue' for x in graph_smurfing.vs]
+        graph_smurfing.vs['size'] = [10 if x['laundering'] else 5 for x in graph_smurfing.vs]
+        graph_smurfing.es['color'] = ['black' if x['laundering'] else 'gray' for x in graph_smurfing.es]
 
-    visual_style = {}
-    visual_style["vertex_size"] = graph_smurfing.vs['size']
-    visual_style["vertex_color"] = graph_smurfing.vs['color']
-    visual_style["edge_color"] = graph_smurfing.es['color']
-    visual_style["edge_width"] = 1
-    ig.plot(graph_smurfing, **visual_style, target='data/visualisation_network_'+string_name+'.pdf')
+        visual_style = {}
+        visual_style["vertex_size"] = graph_smurfing.vs['size']
+        visual_style["vertex_color"] = graph_smurfing.vs['color']
+        visual_style["edge_color"] = graph_smurfing.es['color']
+        visual_style["edge_width"] = 1
+        ig.plot(graph_smurfing, **visual_style, target='data/visualisation_network_'+string_name+'.pdf')
 
     # Extract nodes into a pandas dataframe
     nodes_data = {attr: graph_smurfing.vs[attr] for attr in graph_smurfing.vs.attributes()}
@@ -200,30 +214,29 @@ def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patter
 
 
 if __name__ == '__main__':
-    n_nodes_list = [100, 1000, 10000, 100000] # Number of nodes in the graph
+    n_nodes_list = [100, 10000, 100000] # Number of nodes in the graph
     m_edges_list = [1, 2, 5] # Number of edges to attach from a new node to existing nodes
-    p_edges_list = [0.1, 0.2, 0.5] # Probability of adding an edge between two nodes
+    p_edges_list = [0.001, 0.01] # Probability of adding an edge between two nodes
     generation_method_list = [
         'Barabasi-Albert', 
         'Erdos-Renyi', 
         'Watts-Strogatz'
         ] # Generation method for the graph
-    n_patterns_list = [3, 5, 10, 50] # Number of smurfing patterns to add
+    n_patterns_list = [3, 5] # Number of smurfing patterns to add
 
     for n_nodes in n_nodes_list:
-        for generation_method in generation_method_list:
-            if generation_method == 'Barabasi-Albert':
-                for m_edges in m_edges_list:
-                    for n_patterns in n_patterns_list:
-                        # No p_edges for Barabasi-Albert
-                        create_synthetic_data(n_nodes, m_edges, 0, generation_method, n_patterns)
-            elif generation_method == 'Erdos-Renyi':
-                for p_edges in p_edges_list:
-                    for n_patterns in n_patterns_list:
-                        # No m_edges for Erdos-Renyi
-                        create_synthetic_data(n_nodes, 0, p_edges, generation_method, n_patterns)
-            elif generation_method == 'Watts-Strogatz':
-                for m_edges in m_edges_list:
-                    for p_edges in p_edges_list:
-                        for n_patterns in n_patterns_list:
-                            create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns)
+        for n_patterns in n_patterns_list:
+            if n_patterns <= 0.06*n_nodes:
+                for generation_method in generation_method_list:
+                    if generation_method == 'Barabasi-Albert':
+                        for m_edges in m_edges_list:
+                            # No p_edges for Barabasi-Albert
+                            create_synthetic_data(n_nodes, m_edges, 0, generation_method, n_patterns)
+                    elif generation_method == 'Erdos-Renyi':
+                        for p_edges in p_edges_list:
+                            # No m_edges for Erdos-Renyi
+                            create_synthetic_data(n_nodes, 0, p_edges, generation_method, n_patterns)
+                    elif generation_method == 'Watts-Strogatz':
+                        for m_edges in m_edges_list:
+                            for p_edges in p_edges_list:
+                                create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns)
