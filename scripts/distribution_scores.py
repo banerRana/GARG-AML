@@ -35,7 +35,7 @@ def lift_curve_values(y_val, y_pred, steps):
         data_len = int(np.ceil(step*len(df_lift)))
         data_value = df_lift.iloc[data_len-1]['Pred']
         data_lift = df_lift[df_lift['Pred'] >= data_value]
-        val_lift = data_lift['Real'].sum()/data_len
+        val_lift = data_lift['Real'].sum()/len(data_lift)
         vals_lift.append(val_lift/global_ratio)
 
     return(vals_lift)
@@ -213,7 +213,6 @@ def distribution_scores_synthetic(results_df, str_directed, str_supervised):
     fig.tight_layout()
     plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_lift.pdf")
     plt.close()
-
 
 if __name__ == "__main__":
     dataset = "synthetic"  
