@@ -33,7 +33,8 @@ def lift_curve_values(y_val, y_pred, steps):
 
     for step in steps:
         data_len = int(np.ceil(step*len(df_lift)))
-        data_lift = df_lift.iloc[:data_len, :]
+        data_value = df_lift.iloc[data_len-1]['Pred']
+        data_lift = df_lift[df_lift['Pred'] >= data_value]
         val_lift = data_lift['Real'].sum()/data_len
         vals_lift.append(val_lift/global_ratio)
 
@@ -166,7 +167,7 @@ def distribution_scores_synthetic(results_df, str_directed, str_supervised):
 
     n = len(columns)
 
-    fig, axes = plt.subplots(n, 1, figsize = (6, 2*n))
+    fig, axes = plt.subplots(n//2, n//2+n%2, figsize = (3*n, 1.5*n))
 
     for i in range(n):
         column = columns[i]
@@ -181,21 +182,42 @@ def distribution_scores_synthetic(results_df, str_directed, str_supervised):
         bins = np.histogram_bin_edges(all_data, bins=20)
 
         # Plot histogram for label 0
-        axes[i].hist(label_0, bins=bins, alpha=0.5, label='Label 0', density=True)
+        axes[i//2, i%2].hist(label_0, bins=bins, alpha=0.5, label='Other', density=True)
 
         # Plot histogram for label 1
-        axes[i].hist(label_1, bins=bins, alpha=0.5, label='Label 1', density=True)
+        axes[i//2, i%2].hist(label_1, bins=bins, alpha=0.5, label=column, density=True)
 
         # Add labels and title
-        axes[i].set_xlabel('GARG-AML score')
-        axes[i].set_ylabel('Relative Frequency')
-        axes[i].set_title(column)
+        axes[i//2, i%2].legend()
+        axes[i//2, i%2].set_xlabel('GARG-AML score')
+        axes[i//2, i%2].set_ylabel('Relative Frequency')
+        axes[i//2, i%2].set_title(column)
     fig.tight_layout()
     plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_histogram.pdf")
+    plt.close()
+
+    fig, axes = plt.subplots(n//2, n//2+n%2, figsize = (3*n, 1.5*n))
+    values = np.linspace(0.01, 1, 100)
+
+    for i in range(n):
+        column = columns[i]
+        laundering_combined["Label"] = laundering_combined[column].values
+        
+        lift = lift_curve_values(laundering_combined["Label"], laundering_combined["GARGAML"], values)
+
+        axes[i//2, i%2].plot(values, lift)
+        axes[i//2, i%2].set_xlabel('Percentage of data')
+        axes[i//2, i%2].set_ylabel('Lift')
+        axes[i//2, i%2].set_title(column)
+
+    fig.tight_layout()
+    plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_lift.pdf")
+    plt.close()
+
 
 if __name__ == "__main__":
     dataset = "synthetic"  
-    directed = False
+    directed = True
     supervised = True
     score_type = "weighted_average" # basic or weighted_average
     str_directed = "directed" if directed else "undirected"
