@@ -5,6 +5,8 @@ DIR = "./"
 os.chdir(DIR)
 sys.path.append(DIR)
 
+from sklearn.metrics import roc_auc_score, average_precision_score
+
 from src.data.pattern_construction import define_ML_labels, summarise_ML_labels
 from src.methods.gargaml_scores import define_gargaml_scores
 import pandas as pd
@@ -160,16 +162,14 @@ def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
     print("="*10)
     print("Figure lift saved")
 
-def distribution_scores_synthetic(results_df, str_directed, str_supervised):
-    columns = ['laundering', 'separate', 'new_mules', 'existing_mules']
-    label_data = pd.read_csv("data/label_data_synthetic.csv")
-    laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="inner")
-
+def plot_distribution_synthetic(laundering_combined, columns, str_directed, str_supervised):
     n = len(columns)
 
     fig, axes = plt.subplots(n//2, n//2+n%2, figsize = (3*n, 1.5*n))
 
     for i in range(n):
+        # Distributions
+
         column = columns[i]
         laundering_combined["Label"] = laundering_combined[column].values
 
@@ -196,6 +196,9 @@ def distribution_scores_synthetic(results_df, str_directed, str_supervised):
     plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_histogram.pdf")
     plt.close()
 
+def plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervised):
+    n = len(columns)
+
     fig, axes = plt.subplots(n//2, n//2+n%2, figsize = (3*n, 1.5*n))
     values = np.linspace(0.01, 1, 100)
 
@@ -214,11 +217,27 @@ def distribution_scores_synthetic(results_df, str_directed, str_supervised):
     plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_lift.pdf")
     plt.close()
 
-if __name__ == "__main__":
-    dataset = "synthetic"  
-    directed = True
-    supervised = True
-    score_type = "weighted_average" # basic or weighted_average
+
+def distribution_scores_synthetic(results_df, str_directed, str_supervised):
+    columns = ['laundering', 'separate', 'new_mules', 'existing_mules']
+    label_data = pd.read_csv("data/label_data_synthetic.csv")
+    laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="inner")
+
+    plot_distribution_synthetic(laundering_combined, columns, str_directed, str_supervised)
+
+    plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervised)
+
+
+    results = dict()
+    for column in columns:
+        print(column)
+        auc_roc = roc_auc_score(laundering_combined[column], laundering_combined["GARGAML"])
+        auc_pr = average_precision_score(laundering_combined[column], laundering_combined["GARGAML"])
+        results[column] = [auc_roc, auc_pr]
+    
+    return results
+
+def general_calculation(dataset, directed, supervised, score_type):
     str_directed = "directed" if directed else "undirected"
     str_supervised = "supervised" if supervised else "unsupervised"
 
@@ -236,8 +255,56 @@ if __name__ == "__main__":
     if dataset in ["HI-Small", "LI-Large"]:
         distribution_scores_IBM(dataset, results_df, str_directed, str_supervised)
 
-    elif dataset == "synthetic":
+    elif dataset[:min(9, len(dataset))] == "synthetic": #use min in case string would be shorter than 9. We don't want an error here
         distribution_scores_synthetic(results_df, str_directed, str_supervised)
 
     else:
         raise ValueError("Invalid dataset")
+
+def benchmark_synthetic():
+    n_nodes_list = [100, 10000, 100000] # Number of nodes in the graph
+    m_edges_list = [1, 2, 5] # Number of edges to attach from a new node to existing nodes
+    p_edges_list = [0.001, 0.01] # Probability of adding an edge between two nodes
+    generation_method_list = [
+        'Barabasi-Albert', 
+        'Erdos-Renyi', 
+        'Watts-Strogatz'
+        ] # Generation method for the graph
+    n_patterns_list = [3, 5] # Number of smurfing patterns to add
+
+    results_all = dict()
+
+    for n_nodes in n_nodes_list:
+        for n_patterns in n_patterns_list:
+            if n_patterns <= 0.06*n_nodes:
+                for generation_method in generation_method_list:
+                    if generation_method == 'Barabasi-Albert':
+                        p_edges = 0
+                        for m_edges in m_edges_list:
+                            string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            results_int = distribution_scores_synthetic(string_name, directed, supervised, score_type)
+                            results_all[string_name] = results_int
+                    if generation_method == 'Erdos-Renyi':
+                        m_edges = 0
+                        for p_edges in p_edges_list:
+                            string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            results_int = distribution_scores_synthetic(string_name, directed, supervised, score_type)
+                            results_all[string_name] = results_int
+
+                    if generation_method == 'Watts-Strogatz':
+                        for m_edges in m_edges_list:
+                            for p_edges in p_edges_list:
+                                string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                                results_int = distribution_scores_synthetic(string_name, directed, supervised, score_type)
+                                results_all[string_name] = results_int
+
+if __name__ == "__main__":
+    dataset = "synthetic"  
+    directed = True
+    supervised = True
+    score_type = "weighted_average" # basic or weighted_average
+
+    if dataset == "synthetic":
+        benchmark_synthetic(directed, supervised, score_type)
+    else: 
+        general_calculation(dataset, directed, supervised, score_type)
