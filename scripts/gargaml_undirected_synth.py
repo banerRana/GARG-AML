@@ -80,16 +80,16 @@ if __name__ == '__main__':
                     if generation_method == 'Barabasi-Albert':
                         p_edges = 0
                         for m_edges in m_edges_list:
-                            string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             score_calculation(string_name)
                     if generation_method == 'Erdos-Renyi':
                         m_edges = 0
                         for p_edges in p_edges_list:
-                            string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             score_calculation(string_name)
 
                     if generation_method == 'Watts-Strogatz':
                         for m_edges in m_edges_list:
                             for p_edges in p_edges_list:
-                                string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                                string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                                 score_calculation(string_name)

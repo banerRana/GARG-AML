@@ -125,7 +125,7 @@ def add_smurfing_patterns(graph, n, list_nodes, num_smurfs=[] ,type_pattern=''):
     return graph_smurfing, list_nodes
 
 def create_synthetic_data(n_nodes, m_edges, p_edges, generation_method, n_patterns):
-    string_name = generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+    string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
 
     print("=====================================")
     print('Creating synthetic data for:', string_name)
