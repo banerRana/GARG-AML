@@ -222,7 +222,8 @@ def plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervis
 def distribution_scores_synthetic(dataset, results_df, str_directed, str_supervised):
     columns = ['laundering', 'separate', 'new_mules', 'existing_mules']
     label_data = pd.read_csv("data/label_data_"+dataset+".csv")
-    laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="inner")
+    laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="outer")
+    laundering_combined.fillna(-1, inplace=True) # Nodes without connections: not smurfing according to us
 
     plot_distribution_synthetic(laundering_combined, columns, str_directed, str_supervised)
 
