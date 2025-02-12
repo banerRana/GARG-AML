@@ -10,6 +10,7 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 from src.data.pattern_construction import define_ML_labels, summarise_ML_labels
 from src.methods.gargaml_scores import define_gargaml_scores
 import pandas as pd
+import timeit
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -220,7 +221,7 @@ def plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervis
 
 def distribution_scores_synthetic(dataset, results_df, str_directed, str_supervised):
     columns = ['laundering', 'separate', 'new_mules', 'existing_mules']
-    label_data = pd.read_csv("results/label_data_"+dataset+".csv")
+    label_data = pd.read_csv("data/label_data_"+dataset+".csv")
     laundering_combined = results_df.merge(label_data, left_index=True, right_index=True, how="inner")
 
     plot_distribution_synthetic(laundering_combined, columns, str_directed, str_supervised)
@@ -281,8 +282,6 @@ def benchmark_synthetic(
         ] # Generation method for the graph
     n_patterns_list = [3, 5] # Number of smurfing patterns to add
 
-    results_all = dict()
-
     for n_nodes in n_nodes_list:
         for n_patterns in n_patterns_list:
             if n_patterns <= 0.06*n_nodes:
@@ -293,14 +292,16 @@ def benchmark_synthetic(
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             print("====", string_name, "====")
                             results_int = general_calculation(string_name, directed, supervised, score_type)
-                            results_all[string_name] = results_int
+                            with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                                f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
                     if generation_method == 'Erdos-Renyi':
                         m_edges = 0
                         for p_edges in p_edges_list:
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             print("====", string_name, "====")
                             results_int = general_calculation(string_name, directed, supervised, score_type)
-                            results_all[string_name] = results_int
+                            with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                                f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
 
                     if generation_method == 'Watts-Strogatz':
                         for m_edges in m_edges_list:
@@ -308,10 +309,8 @@ def benchmark_synthetic(
                                 string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                                 print("====", string_name, "====")
                                 results_int = general_calculation(string_name, directed, supervised, score_type)
-                                results_all[string_name] = results_int
-
-    results_df = pd.DataFrame(results_all)
-    results_df.to_csv("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_combined.csv")
+                                with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                                    f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
 
 if __name__ == "__main__":
     dataset = "synthetic"  
