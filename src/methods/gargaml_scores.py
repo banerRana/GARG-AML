@@ -95,13 +95,15 @@ def calculate_score_undirected(line, score_type="basic"):
     
     elif score_type == "weighted_average":
         size_1 = line["size_1"]
+        size_2 = line["size_2"]
         size_3 = line["size_3"]
         total_size = size_1 + size_3
         if total_size > 0:
             measure = measure_2 - (size_1 * measure_1 + size_3 * measure_3) / total_size
+        elif size_2 > 0:
+            measure = measure_2 #both sizes are 0, so only measure_2 is relevant
         else:
-            measure = measure_2  # both sizes are 0, so only measure_2 is relevant
-
+            measure = -1 #Far away from smurfing
     return measure
 
 def define_gargaml_scores_undirected(results_df_measures, score_type="basic"):
