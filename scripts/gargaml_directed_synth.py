@@ -9,6 +9,7 @@ sys.path.append(DIR)
 import pandas as pd
 from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
+import timeit
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -102,15 +103,30 @@ if __name__ == '__main__':
                         p_edges = 0
                         for m_edges in m_edges_list:
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            start = timeit.default_timer()
                             score_calculation(string_name)
+                            end = timeit.default_timer()
+                            calc_time = end - start
+                            with open('results/time_results_dir.txt', 'a') as f:
+                                f.write(string_name + ': ' + str(calc_time) + '\n')
                     if generation_method == 'Erdos-Renyi':
                         m_edges = 0
                         for p_edges in p_edges_list:
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                            start = timeit.default_timer()
                             score_calculation(string_name)
+                            end = timeit.default_timer()
+                            calc_time = end - start
+                            with open('results/time_results_dir.txt', 'a') as f:
+                                f.write(string_name + ': ' + str(calc_time) + '\n')
 
                     if generation_method == 'Watts-Strogatz':
                         for m_edges in m_edges_list:
                             for p_edges in p_edges_list:
                                 string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
+                                start = timeit.default_timer()
                                 score_calculation(string_name)
+                                end = timeit.default_timer()
+                                calc_time = end - start
+                                with open('results/time_results_dir.txt', 'a') as f:
+                                    f.write(string_name + ': ' + str(calc_time) + '\n')
