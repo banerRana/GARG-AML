@@ -2,7 +2,9 @@ import pandas as pd
 import networkx as nx
 import numpy as np
 
-def reduce_graph(G, degree_cutoff):
+def graph_degree(G, degree_cutoff=0.01):
+    # Delete the hubs
+    # The cut-off is defined as a relative number
     G_copy = G.copy()
     
     degree_df = pd.DataFrame(
@@ -12,7 +14,8 @@ def reduce_graph(G, degree_cutoff):
         index = ["Degree"]
     ).transpose()
 
-    hub_criteria = degree_df["Degree"]>degree_cutoff
+    degree_threshold = degree_df["Degree"].quantile(1 - degree_cutoff)
+    hub_criteria = degree_df["Degree"] >= degree_threshold
     
     hubs_deleted = list(
                 degree_df[hub_criteria].reset_index()["index"]
