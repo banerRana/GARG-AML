@@ -247,7 +247,12 @@ def general_calculation(dataset, directed, supervised, score_type):
 
     if supervised:
         results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
+        start = timeit.default_timer()
         results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
+        end = timeit.default_timer()
+        calc_time = end - start
+        with open('results/time_results_scores_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+            f.write(dataset + ': ' + str(calc_time) + '\n')
 
     else:
         results_df = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
