@@ -24,22 +24,22 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 from pickle import dump
 
-def gargaml_tree(X, y, save = False):
+def gargaml_tree(X, y, save = False, save_path = "results/model_tree.pkl"):
     clf = tree.DecisionTreeClassifier(min_samples_leaf=10)
     clf = clf.fit(X, y)
 
     if save:
-        with open("results/model_tree.pkl", "wb") as f:
+        with open(save_path, "wb") as f:
             dump(clf, f, protocol=5)
 
     return clf
 
-def gargaml_boosting(X, y, save = False):
+def gargaml_boosting(X, y, save = False, save_path = "results/model_boosting.pkl"):
     clf = ensemble.GradientBoostingClassifier(min_samples_leaf=10, random_state=1997)
     clf = clf.fit(X, y)
 
     if save:
-        with open("results/model_boosting.pkl", "wb") as f:
+        with open(save_path, "wb") as f:
             dump(clf, f, protocol=5)
 
     return clf
@@ -115,7 +115,7 @@ def main():
     dataset = "HI-Small"  
     directed = True
     str_directed = "directed" if directed else "undirected"
-    score_type = "basic"
+    score_type = "weighted_average"
 
     cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
     columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
