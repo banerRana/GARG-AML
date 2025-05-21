@@ -43,7 +43,7 @@ def lift_curve_values(y_val, y_pred, steps):
 
     return(vals_lift)
 
-def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
+def distribution_scores_IBM_plots(dataset, results_df, str_directed, str_supervised):
     transactions_df_extended, pattern_columns = define_ML_labels(
         path_trans = "data/"+dataset+"_Trans.csv",
         path_patterns = "data/"+dataset+"_Patterns.txt"
@@ -55,7 +55,6 @@ def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
     from_data.columns = ["Account", "Bank"]
     to_data = transactions_df_extended[["Account.1", "To Bank"]].drop_duplicates()
     to_data.columns = ["Account", "Bank"]
-    total_data = pd.concat([from_data, to_data], axis=0).drop_duplicates()
 
     print("="*10)
     print("Data loaded")
@@ -102,7 +101,7 @@ def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
             divergence_matrix[i, j] = divergence
 
     divergence_df = pd.DataFrame(divergence_matrix, columns=columns, index=cut_offs)
-    divergence_df.to_csv("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_divergence.csv")
+    divergence_df.to_csv("results-0/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_divergence.csv")
 
     print("="*10)
     print("Divergence saved")
@@ -118,7 +117,7 @@ def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
     else:
         fig.suptitle('Distribution of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
     fig.tight_layout()
-    plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_histogram.pdf")
+    plt.savefig("results-0/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_histogram.pdf")
     plt.close()
 
     print("="*10)
@@ -157,11 +156,43 @@ def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
         fig.suptitle('Lift curve of '+ str_directed +' anomaly scores by Label for data set: '+ dataset)
 
     fig.tight_layout()
-    plt.savefig("results/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_lift.pdf")
+    plt.savefig("results-0/"+dataset+"_GARGAML_"+str_supervised+"_"+str_directed+"_combined_lift.pdf")
     plt.close()
 
     print("="*10)
     print("Figure lift saved")
+
+def distribution_scores_IBM(dataset, results_df, str_directed, str_supervised):
+    transactions_df_extended, pattern_columns = define_ML_labels(
+        path_trans = "data/"+dataset+"_Trans.csv",
+        path_patterns = "data/"+dataset+"_Patterns.txt"
+    )
+
+    laundering_combined, _, _ = summarise_ML_labels(transactions_df_extended,pattern_columns)
+    del transactions_df_extended
+    del pattern_columns
+
+    labels_gargaml_full = laundering_combined.merge(results_df[["GARGAML"]], left_index=True, right_index=True, how="outer").fillna(-1)
+    del laundering_combined
+
+    y_pred = labels_gargaml_full["GARGAML"].values
+
+    cut_offs = [0.1, 0.2, 0.3, 0.5, 0.9]
+    columns = ['Is Laundering', 'FAN-OUT', 'FAN-IN', 'GATHER-SCATTER', 'SCATTER-GATHER', 'CYCLE', 'RANDOM', 'BIPARTITE', 'STACK']
+
+    n = len(cut_offs)
+    m = len(columns)
+
+    for i in range(n):
+        cut_off = cut_offs[i]
+        for j in range(m):
+            column = columns[j]
+            y_true = ((labels_gargaml_full[column]>cut_off)*1).values
+            auc_roc = roc_auc_score(y_true, y_pred)
+            auc_pr = average_precision_score(y_true, y_pred)
+
+            with open('results/results_performance_IBM_'+str_directed+'.txt', 'a') as f:
+                f.write(dataset+'_'+column+'_'+str(cut_off)+' [AUC-ROC, AUC-PR]: '+str([auc_roc, auc_pr])+'\n')
 
 def plot_distribution_synthetic(laundering_combined, columns, str_directed, str_supervised):
     n = len(columns)
@@ -194,7 +225,7 @@ def plot_distribution_synthetic(laundering_combined, columns, str_directed, str_
         axes[i//2, i%2].set_ylabel('Relative Frequency')
         axes[i//2, i%2].set_title(column)
     fig.tight_layout()
-    plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_histogram.pdf")
+    plt.savefig("results-0/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_histogram.pdf")
     plt.close()
 
 def plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervised):
@@ -215,7 +246,7 @@ def plot_lift_synthetic(laundering_combined, columns, str_directed, str_supervis
         axes[i//2, i%2].set_title(column)
 
     fig.tight_layout()
-    plt.savefig("results/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_lift.pdf")
+    plt.savefig("results-0/synthetic_GARGAML_"+str_supervised+"_"+str_directed+"_lift.pdf")
     plt.close()
 
 
@@ -246,16 +277,11 @@ def general_calculation(dataset, directed, supervised, score_type):
     str_supervised = "supervised" if supervised else "unsupervised"
 
     if supervised:
-        results_df_measures = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+".csv")
-        start = timeit.default_timer()
+        results_df_measures = pd.read_csv("results-0/"+dataset+"_GARGAML_"+str_directed+".csv")
         results_df = define_gargaml_scores(results_df_measures, directed=directed, score_type=score_type)
-        end = timeit.default_timer()
-        calc_time = end - start
-        with open('results/time_results_scores_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
-            f.write(dataset + ': ' + str(calc_time) + '\n')
 
     else:
-        results_df = pd.read_csv("results/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
+        results_df = pd.read_csv("results-0/"+dataset+"_GARGAML_"+str_directed+"_IF.csv")
         results_df = results_df.set_index("node")
         results_df = results_df[["anomaly_score"]]
         results_df["anomaly_score"] = results_df["anomaly_score"]*(-1)
@@ -298,7 +324,7 @@ def benchmark_synthetic(
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             print("====", string_name, "====")
                             results_int = general_calculation(string_name, directed, supervised, score_type)
-                            with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                            with open('results-0/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
                                 f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
                     if generation_method == 'Erdos-Renyi':
                         m_edges = 0
@@ -306,7 +332,7 @@ def benchmark_synthetic(
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                             print("====", string_name, "====")
                             results_int = general_calculation(string_name, directed, supervised, score_type)
-                            with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                            with open('results-0/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
                                 f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
 
                     if generation_method == 'Watts-Strogatz':
@@ -315,11 +341,11 @@ def benchmark_synthetic(
                                 string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
                                 print("====", string_name, "====")
                                 results_int = general_calculation(string_name, directed, supervised, score_type)
-                                with open('results/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
+                                with open('results-0/results_performance_'+str_directed+'_'+str_supervised+'.txt', 'a') as f:
                                     f.write(string_name+' [AUC-ROC, AUC-PR]: '+str(results_int)+'\n')
 
 if __name__ == "__main__":
-    dataset = "synthetic"  
+    dataset = "LI-Large"  
     directed = False
     supervised = True
     score_type = "weighted_average" # basic or weighted_average
