@@ -14,66 +14,52 @@ import timeit
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
-from src.data.graph_construction import construct_IBM_graph, construct_synthetic_graph
+from src.data.graph_construction import construct_synthetic_graph
 from src.utils.graph_processing import graph_community
 from src.methods.GARGAML import GARG_AML_node_undirected_measures
 
-# Define a function to process each node
-def process_node(node, G_reduced):
-    measure_1, measure_2, measure_3, size_1, size_2, size_3 = GARG_AML_node_undirected_measures(node, G_reduced, include_size=True)
-    return (node, measure_1, measure_2, measure_3, size_1, size_2, size_3)
+# Global variable for worker processes
+graph_for_worker = None
 
-def score_calculation(dataset):
-    print("====================================")
-    print(dataset)
-    directed = False
-    path = 'data/edge_data_'+dataset+'.csv'
-    G = construct_synthetic_graph(path=path, directed = directed)
-    
-    G_reduced = graph_community(G)
-    # Get the list of nodes
-    nodes = list(G_reduced.nodes)
+def init_worker(graph):
+    """
+    Initializer for worker processes to set the graph in each subprocess.
+    """
+    global graph_for_worker
+    graph_for_worker = graph
 
-    print("Here we go")
-    start_time = time.time()
-    # Use multiprocessing to process nodes in parallel
-    process_node_partial = partial(process_node, G_reduced=G_reduced)
-    with Pool(cpu_count()) as pool:
-        results = list(tqdm(pool.imap(process_node_partial, nodes), total=len(nodes)))
+def process_node(node):
+    """
+    Worker function: computes GARG-AML measures for a single node using the global graph.
+    """
+    m1, m2, m3, s1, s2, s3 = GARG_AML_node_undirected_measures(
+        node, graph_for_worker, include_size=True
+    )
+    return (node, m1, m2, m3, s1, s2, s3)
 
-    # Unpack the results
-    nodes, measure_1_list, measure_2_list, measure_3_list, size_1_list, size_2_list, size_3_list = zip(*results)
-
-    # End timing
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-
-    print(f"Total time taken: {elapsed_time:.2f} seconds")
-
-    data_dict = {
-        "node": nodes,
-        "measure_1": measure_1_list,
-        "measure_2": measure_2_list,
-        "measure_3": measure_3_list,
-        "size_1": size_1_list,
-        "size_2": size_2_list,
-        "size_3": size_3_list
-    }
-
-    df = pd.DataFrame(data_dict)
-    df.to_csv("results/"+dataset+"_GARGAML_undirected.csv", index=False)
-
-if __name__ == '__main__':
-    n_nodes_list = [100, 10000, 100000] # Number of nodes in the graph
-    m_edges_list = [1, 2, 5] # Number of edges to attach from a new node to existing nodes
-    p_edges_list = [0.001, 0.01] # Probability of adding an edge between two nodes
+def construct_datasets():
+    datasets_list = []
+    n_nodes_list = [
+        100, 
+        10000, 
+        100000
+        ] # Number of nodes in the graph
+    m_edges_list = [
+        1, 
+        2, 
+        5
+        ] # Number of edges to attach from a new node to existing nodes
+    p_edges_list = [
+        0.001, 
+        0.01
+        ] # Probability of adding an edge between two nodes
     generation_method_list = [
         'Barabasi-Albert', 
         'Erdos-Renyi', 
         'Watts-Strogatz'
         ] # Generation method for the graph
     n_patterns_list = [3, 5] # Number of smurfing patterns to add
-    
+
     for n_nodes in n_nodes_list:
         for n_patterns in n_patterns_list:
             if n_patterns <= 0.06*n_nodes:
@@ -82,30 +68,67 @@ if __name__ == '__main__':
                         p_edges = 0
                         for m_edges in m_edges_list:
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
-                            start = timeit.default_timer()
-                            score_calculation(string_name)
-                            end = timeit.default_timer()
-                            calc_time = end - start
-                            with open('results/time_results_undir.txt', 'a') as f:
-                                f.write(string_name + ': ' + str(calc_time) + '\n')
+                            datasets_list.append(string_name)
                     if generation_method == 'Erdos-Renyi':
                         m_edges = 0
                         for p_edges in p_edges_list:
                             string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
-                            start = timeit.default_timer()
-                            score_calculation(string_name)
-                            end = timeit.default_timer()
-                            calc_time = end - start
-                            with open('results/time_results_undir.txt', 'a') as f:
-                                f.write(string_name + ': ' + str(calc_time) + '\n')
-
+                            datasets_list.append(string_name)
                     if generation_method == 'Watts-Strogatz':
                         for m_edges in m_edges_list:
                             for p_edges in p_edges_list:
                                 string_name = 'synthetic_' + generation_method + '_'  + str(n_nodes) + '_' + str(m_edges) + '_' + str(p_edges) + '_' + str(n_patterns)
-                                start = timeit.default_timer()
-                                score_calculation(string_name)
-                                end = timeit.default_timer()
-                                calc_time = end - start
-                                with open('results/time_results_undir.txt', 'a') as f:
-                                    f.write(string_name + ': ' + str(calc_time) + '\n')
+                                datasets_list.append(string_name)
+    return datasets_list
+
+datasets = construct_datasets()
+directed = False
+# Parallelism: use up to 4 or half of CPUs
+n_cpu = min(4, cpu_count() // 2)
+
+if __name__ == '__main__':
+    os.makedirs('results', exist_ok=True)
+
+    for dataset in datasets:
+        print(f"\n=== Processing dataset: {dataset} ===")
+        start_time = timeit.default_timer()
+
+        # Load or construct graph
+        path = 'data/edge_data_'+dataset+'.csv'
+        G = construct_synthetic_graph(path=path, directed = directed)
+
+        G_reduced = graph_community(G)
+
+        nodes = list(G_reduced.nodes)
+        print(f"Number of nodes: {len(nodes)} | Using {n_cpu} processes")
+
+        # Initialize pool with graph in each worker
+        with Pool(processes=n_cpu, initializer=init_worker, initargs=(G_reduced,)) as pool:
+            results = list(tqdm(pool.imap(process_node, nodes), total=len(nodes)))
+        # Unpack results
+        (
+            nodes_out,
+            measure_1_list, measure_2_list, measure_3_list,
+            size_1_list, size_2_list, size_3_list
+        ) = zip(*results)
+
+        elapsed = timeit.default_timer() - start_time
+        print(f"Elapsed time: {elapsed:.2f} seconds")
+        # Log timing
+        with open('results/time_results_undir.txt', 'a') as f:
+            f.write(f"{dataset}: {elapsed:.2f}\n")
+
+        # Save DataFrame
+        df = pd.DataFrame({
+            "node": nodes_out,
+            "measure_1": measure_1_list,
+            "measure_2": measure_2_list,
+            "measure_3": measure_3_list,
+            "size_1": size_1_list,
+            "size_2": size_2_list,
+            "size_3": size_3_list,
+        })
+        out_path = f"results/{dataset}_GARGAML_undirected_parallel.csv"
+        df.to_csv(out_path, index=False)
+        print(f"Results saved to {out_path}")
+    print("\nAll datasets processed successfully.")
