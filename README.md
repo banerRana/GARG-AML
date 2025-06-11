@@ -48,10 +48,15 @@ Please cite our paper and/or code as follows:
 
 ```tex
 
-@misc{deprez2024gargaml,
-      title={GARG-AML: finding smurfing using Graph-Aided Risk Guarding for Anti-Money Laundering}, 
+@article{deprez2025gargamlsmurfingscalableinterpretable,
+      title={GARG-AML against Smurfing: A Scalable and Interpretable Graph-Based Framework for Anti-Money Laundering}, 
       author={Bruno Deprez and Bart Baesens and Tim Verdonck and Wouter Verbeke},
-      year={nd}
+      year={2025},
+      journal={arXiv preprint arXiv:2506.04292},
+      eprint={2506.04292},
+      archivePrefix={arXiv},
+      primaryClass={cs.SI},
+      url={https://arxiv.org/abs/2506.04292}, 
 }
 
 ```
