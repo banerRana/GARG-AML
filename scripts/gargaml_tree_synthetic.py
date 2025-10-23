@@ -9,6 +9,7 @@ sys.path.append(DIR)
 
 
 import pandas as pd
+import matplotlib.pyplot as plt
 
 from src.methods.gargaml_scores import define_gargaml_scores, summarise_gargaml_scores
 from src.data.graph_construction import construct_synthetic_graph
@@ -73,6 +74,15 @@ def train_pipeline(string_name, pattern, tree_model, directed):
     if tree_model == 'tree':
         clf = tree.DecisionTreeClassifier(min_samples_leaf=10, random_state=1997)
         clf.fit(X_train, y_train)
+        tree.plot_tree(
+            clf, 
+            feature_names=gargaml_columns, 
+            proportion=False,
+            impurity=False, 
+            class_names=['not_'+pattern, pattern],
+            filled=True
+            )
+        plt.savefig('res/tree_'+string_name+'_'+pattern+'.pdf')
     elif tree_model == 'boosting':
         clf = ensemble.GradientBoostingClassifier(min_samples_leaf=10, random_state=1997)
         clf.fit(X_train, y_train)
@@ -167,7 +177,7 @@ def main():
                                 results_dict[string_name] = results
     # Save results
     results_df = pd.DataFrame(results_dict)
-    results_df.to_csv("synthetic_tree_"+str(directed)+".csv")
+    #results_df.to_csv("synthetic_tree_"+str(directed)+".csv")
 
 if __name__ == '__main__':
     main()
